@@ -635,9 +635,15 @@ server.registerTool(
     description:
       "Arc: repays the agent's debt from its own wallet (Lifeline signs with the key it holds). Defaults to everything owed. " +
       "Sui: repayments settle on chain from the agent's earnings when due; this reports what is owed.",
-    inputSchema: { amountUsd: z.number().positive().optional() },
+    inputSchema: {
+      amountUsd: z.number().positive().optional(),
+      fromChain: z
+        .enum(["Ethereum_Sepolia", "Base_Sepolia", "Arbitrum_Sepolia", "Optimism_Sepolia", "Polygon_Amoy_Testnet", "Avalanche_Fuji", "Unichain_Sepolia"])
+        .optional()
+        .describe("Arc only: repay with USDC the agent holds on this chain, bridged to Arc first"),
+    },
   },
-  async ({ amountUsd }) => {
+  async ({ amountUsd, fromChain }) => {
     const g = await ensureConnected();
     if (!g.ok) return text(g.text);
     const me = await api("/api/agent/me", { bearer: g.c.token });
@@ -651,6 +657,11 @@ server.registerTool(
       );
     }
     const amount = Math.min(amountUsd ?? owes, owes);
+    if (fromChain) {
+      const b = await api("/api/repay/crosschain", { body: { agentAddress: g.c.agent.address, fromChain, amountUsd: amount }, bearer: g.c.token });
+      if (!b.data.success) return fail(`Not repaid: ${b.data.error ?? `status ${b.status}`}`);
+      return text(`Bridged ${usd(b.data.bridgedUsd)} from ${fromChain} to Arc and repaid ${usd(b.data.repaidUsd)}.`);
+    }
     const r = await api("/api/repay", { body: { agentAddress: g.c.agent.address, amount }, bearer: g.c.token });
     if (!r.data.success) {
       return fail(
