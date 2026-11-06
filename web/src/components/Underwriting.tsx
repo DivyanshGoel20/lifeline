@@ -43,7 +43,7 @@ export const Underwriting: React.FC<{
       .then((json) => {
         if (cancelled || !json.success || !json.summary) return;
         setData(json.summary);
-        onTier?.(json.summary.currentTier.creditLimit);
+        onTier?.(json.lineUsd ?? json.summary.currentTier.creditLimit);
       })
       .catch(() => {});
     return () => {

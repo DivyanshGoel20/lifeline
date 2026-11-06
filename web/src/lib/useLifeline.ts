@@ -99,7 +99,7 @@ export function useLifeline(
       if (Array.isArray(obligationData.obligations)) setObligations(obligationData.obligations);
       const [arcRecord, suiRecord] = await Promise.all([ra?.json().catch(() => null), rs?.json().catch(() => null)]);
       setLimits((cur) => ({
-        arc: arcRecord?.summary?.currentTier?.creditLimit ?? cur.arc,
+        arc: arcRecord?.lineUsd ?? arcRecord?.summary?.currentTier?.creditLimit ?? cur.arc,
         sui: suiRecord?.summary?.currentTier?.creditLimit ?? cur.sui,
       }));
       setNow(Date.now());

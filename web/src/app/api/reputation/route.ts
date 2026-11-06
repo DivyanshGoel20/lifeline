@@ -5,6 +5,7 @@ import { unauthenticated } from "@/lib/session";
 import { getAllLoans } from "@/lib/loanStore";
 import { computeHumanReputation, SUI_TIERS } from "@/lib/reputationEngine";
 import { railDebtsFor } from "@/lib/railDebt";
+import { collateralCreditUsd } from "@/lib/collateralStore";
 import type { Loan } from "@/types";
 
 export async function GET(req: NextRequest) {
@@ -57,6 +58,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       summary,
+      // The whole line: what the record earned, plus what a deposit backs.
+      ...(rail === "arc" ? { lineUsd: summary.currentTier.creditLimit + collateralCreditUsd(humanOwner) } : {}),
       fifoModelExplanation:
         "Tranche-based FIFO: Repayments clear your oldest active loans first, immediately pushing forward your facility maturity deadline.",
     });
