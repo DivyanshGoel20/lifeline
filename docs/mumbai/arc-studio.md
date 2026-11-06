@@ -30,6 +30,11 @@ in `contracts/test/` also come from Studio, with import paths adjusted to this r
 Ownership moved from Studio's deployer to Lifeline's operator, so the backend can
 write to both contracts.
 
+The vault's deposits earn through Arc testnet's Earn vault
+`0x8f2d33b5d4b9b5f02df635ae308f7b4c9da8d2dc`, set by the owner in
+`0x9c7dd2d37840cab0e3ba00b36ba55158b0088e57bde9c01aa20dfae6adf01918`. This step was done
+outside Studio. `setYieldVault(address(0))` moves everything back to plain USDC.
+
 ## How the deployment was checked
 
 Studio's report was not taken on trust. Separately from Studio:

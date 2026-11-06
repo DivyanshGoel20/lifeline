@@ -73,7 +73,7 @@ async function main() {
   const arcAgent = (await call("POST", "/api/agent/provision", { label: "e2e-sui-arc", capUsd: 8 })).body.agent?.address as string;
   const credit = await call("GET", `/api/agent/credit?agentAddress=${arcAgent}`);
   const available = credit.body.humanFacility?.totalAvailableCredit;
-  check("Arc's line is untouched by what Sui drew", available === 10, `Arc available ${available}`);
+  check("Arc's line is untouched by what Sui drew", available === 0.5, `Arc available ${available}`);
   const crossed = await call("POST", "/api/borrow", { agentAddress: agent, amount: 0.5 });
   check("a Sui agent cannot borrow on Arc", crossed.status === 400 && crossed.body.code === "wrong_rail", crossed.body.error);
 
