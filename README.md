@@ -16,6 +16,10 @@ Lifeline whether someone repays.
 **Live:** [web-production-2ccec.up.railway.app](https://web-production-2ccec.up.railway.app)
 · also a World mini app, and a Claude Code MCP server.
 
+**At ETHGlobal Mumbai (Continuity track):** real marketplace services, deposit-backed
+credit, lending limits and more. What is new and how to run it:
+[`docs/mumbai`](docs/mumbai/README.md).
+
 ## Architecture
 
 ```
