@@ -7,7 +7,7 @@
  *   npm run e2e:world-agents -- --deny  # deny it instead: nothing may be paid
  *
  * The script plays the agent. It holds only a mandate token - it cannot
- * approve anything itself. It buys a $5 report, is held, asks Lifeline for
+ * approve anything itself. It buys a $0.45 report, is held, asks Lifeline for
  * its human's approval, and prints the code and link for that human. The
  * human answers in the World ID app; the script shows what happened.
  *
@@ -80,7 +80,7 @@ async function main() {
   const asAgent = client({ authorization: `Bearer ${token}` });
 
   const held = await asAgent("POST", "/api/pay", { url: `${PREMIUM}/dossier`, agentAddress: agent });
-  check("the agent's $5 purchase is held for its human", held.status === 202 && !!held.body.hold?.holdId, held.body.screening?.reasons?.[0] ?? held.body.error);
+  check("the agent's $0.45 purchase is held for its human", held.status === 202 && !!held.body.hold?.holdId, held.body.screening?.reasons?.[0] ?? held.body.error);
   const holdId = held.body.hold?.holdId;
   if (!holdId) return finish();
 
@@ -91,7 +91,7 @@ async function main() {
 
   const requested = await asAgent("POST", `/api/pay/holds/${holdId}/approval`);
   check("the agent asks for its human's World ID approval", requested.body.success && !!requested.body.userCode, requested.body.error);
-  await ask(DENY ? "Human: DENY this in World ID" : "Human: approve this $5 payment in World ID", requested.body);
+  await ask(DENY ? "Human: DENY this in World ID" : "Human: approve this $0.45 payment in World ID", requested.body);
 
   const outcome = await waitFor(
     () => asAgent("GET", `/api/pay/holds/${holdId}/approval`),

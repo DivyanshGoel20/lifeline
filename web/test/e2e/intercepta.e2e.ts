@@ -110,7 +110,7 @@ async function main() {
   check("the app's own fake-USDC seller is refused too", fakeInApp.status === 403, say(fakeInApp.body.screening));
 
   const held = await call("POST", "/api/pay", { url: `${PREMIUM}/dossier`, agentAddress: agent });
-  check("a $5 purchase is held for the human", held.status === 202 && !!held.body.hold?.holdId, say(held.body.screening));
+  check("a $0.45 purchase is held for the human", held.status === 202 && !!held.body.hold?.holdId, say(held.body.screening));
   const holds = await call("GET", "/api/pay/holds");
   check("the hold is listed for its human", holds.body.holds?.some((h: any) => h.holdId === held.body.hold?.holdId));
   const declined = await call("POST", `/api/pay/holds/${held.body.hold?.holdId}`, { action: "decline" });
@@ -119,8 +119,8 @@ async function main() {
   check("a declined hold cannot then be approved", again.status === 409, again.body.error);
 
   const heldAgain = await call("POST", "/api/pay", { url: `${PREMIUM}/risk-curve`, agentAddress: agent });
-  // $1 is under the $2 auto-approve line, so this one should simply clear.
-  check("a clean $1 purchase on credit clears on its own", heldAgain.status === 200 && heldAgain.body.screening?.decision === "pay",
+  // $0.20 is under the $0.40 auto-approve line, so this one should simply clear.
+  check("a clean $0.20 purchase on credit clears on its own", heldAgain.status === 200 && heldAgain.body.screening?.decision === "pay",
     `${say(heldAgain.body.screening)} · lent $${heldAgain.body.borrowed}`);
   const second = await call("POST", "/api/pay", { url: `${PREMIUM}/dossier`, agentAddress: agent });
   const approved = await call("POST", `/api/pay/holds/${second.body.hold?.holdId}`, { action: "approve" });

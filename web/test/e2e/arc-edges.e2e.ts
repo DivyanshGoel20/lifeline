@@ -30,7 +30,7 @@ import { ARC_TREASURY } from "../../src/lib/browserChain";
 const APP = process.env.LIFELINE_APP_URL || "http://localhost:3000";
 const PREMIUM = process.env.NEXT_PUBLIC_X402_RESOURCE_BASE || "http://localhost:4402";
 const CENT = `${PREMIUM}/premium-data`; // $0.01
-const DOLLAR = `${PREMIUM}/risk-curve`; // $1.00
+const DOLLAR = `${PREMIUM}/risk-curve`; // $0.20
 const HUMAN = "0x" + crypto.randomBytes(32).toString("hex");
 const STRANGER = "0x" + crypto.randomBytes(32).toString("hex");
 
@@ -91,7 +91,7 @@ async function main() {
   // ── Who may spend ─────────────────────────────────────────────────────
   heading("who may spend");
   const a = (await call("POST", "/api/agent/provision", { label: "edge-a", capUsd: 5 })).body.agent.address as string;
-  const b = (await call("POST", "/api/agent/provision", { label: "edge-b", capUsd: 0.5 })).body.agent.address as string;
+  const b = (await call("POST", "/api/agent/provision", { label: "edge-b", capUsd: 0.1 })).body.agent.address as string;
   check("two agents provisioned", !!a && !!b, `${a} ${b}`);
 
   const r401 = await anon("POST", "/api/pay", { url: CENT, agentAddress: a });
@@ -120,13 +120,13 @@ async function main() {
   const overAgent = await call("POST", "/api/pay", { url: DOLLAR, agentAddress: b });
   // Past the agent's cap but within the line: held for the human, not refused.
   check(
-    "B's $0.50 agent cap holds a $1 purchase for the human",
+    "B's $0.10 agent cap holds a $0.20 purchase for the human",
     overAgent.status === 202 && !overAgent.body.success && !!overAgent.body.hold?.holdId && /spending cap/i.test(overAgent.body.screening?.reasons?.[0] ?? ""),
     overAgent.body.screening?.reasons?.[0] ?? overAgent.body.error
   );
   check("and B owes nothing for the attempt", near(await debtOf(b), 0));
 
-  const overAgentDraw = await call("POST", "/api/borrow", { agentAddress: b, amount: 0.6 });
+  const overAgentDraw = await call("POST", "/api/borrow", { agentAddress: b, amount: 0.15 });
   check("B's agent cap also binds a direct draw", overAgentDraw.status >= 400, overAgentDraw.body.error ?? `status ${overAgentDraw.status}`);
 
   const tiny = (await call("POST", "/api/agent-token", { capUsd: 0.005, days: 1, label: "tiny" })).body.token;
@@ -150,9 +150,9 @@ async function main() {
   const aKey = getAgentPrivateKey(a)!;
   await sendUsdc(process.env.PRIVATE_KEY as `0x${string}`, a, 0.62);
   const aGateway = new GatewayClient({ chain: "arcTestnet", privateKey: aKey });
-  await aGateway.deposit("0.5");
-  const funded = await waitForGateway(a, (n) => n >= 0.5);
-  check("A deposits $0.50 of its own into Gateway", funded >= 0.5, `gateway ${funded}`);
+  await aGateway.deposit("0.1");
+  const funded = await waitForGateway(a, (n) => n >= 0.1);
+  check("A deposits $0.10 of its own into Gateway", funded >= 0.1, `gateway ${funded}`);
 
   const debtBefore = await debtOf(a);
   const own = await call("POST", "/api/pay", { url: CENT, agentAddress: a });
@@ -165,11 +165,11 @@ async function main() {
   heading("an agent with some balance, but not enough");
   const partialBefore = await debtOf(a);
   const partial = await call("POST", "/api/pay", { url: DOLLAR, agentAddress: a });
-  check("a $1 purchase with $0.49 held goes to credit", partial.body.success && partial.body.fundingSource === "LIFELINE_FACILITY", partial.body.error ?? "");
+  check("a $0.20 purchase with $0.09 held goes to credit", partial.body.success && partial.body.fundingSource === "LIFELINE_FACILITY", partial.body.error ?? "");
   // Lifeline's Gateway pays the seller the whole price - one x402 payment
   // has one payer - so the whole price is what the human owes.
   check("the whole price is lent, not only the shortfall", Number(partial.body.borrowed) === 1, `borrowed ${partial.body.borrowed}`);
-  check("A's debt rose by the whole price plus its fee", near((await debtOf(a)) - partialBefore, 1.01), `+${((await debtOf(a)) - partialBefore).toFixed(4)}`);
+  check("A's debt rose by the whole price plus its fee", near((await debtOf(a)) - partialBefore, 0.202), `+${((await debtOf(a)) - partialBefore).toFixed(4)}`);
   check("A's own balance was left alone", near(await gatewayOf(a), afterOwn, 0.0011), `gateway ${await gatewayOf(a)}`);
 
   // ── Direct draw ───────────────────────────────────────────────────────

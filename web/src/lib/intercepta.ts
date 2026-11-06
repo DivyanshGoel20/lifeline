@@ -44,9 +44,9 @@ export const DEMO_RISKY_PAYTO =
 export const DEMO_FAKE_USDC = process.env.INTERCEPTA_DEMO_FAKE_TOKEN || "0x740192316891b06aeddF20c741aBFC76d4CbECB0";
 
 /** Clean counterparty: the agent pays on its own up to this much a payment. */
-export const AUTO_APPROVE_USD = Number(process.env.INTERCEPTA_AUTO_APPROVE_USD || 2);
+export const AUTO_APPROVE_USD = Number(process.env.INTERCEPTA_AUTO_APPROVE_USD || 0.4);
 /** Counterparty with warning signs: capped at this much, above it a human decides. */
-export const ELEVATED_CAP_USD = Number(process.env.INTERCEPTA_ELEVATED_CAP_USD || 0.25);
+export const ELEVATED_CAP_USD = Number(process.env.INTERCEPTA_ELEVATED_CAP_USD || 0.1);
 
 const SEVERE_SCORE = Number(process.env.INTERCEPTA_SEVERE_SCORE || 70);
 const ELEVATED_SCORE = Number(process.env.INTERCEPTA_ELEVATED_SCORE || 30);

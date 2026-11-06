@@ -68,18 +68,18 @@ test("a severe trait refuses even on a low score", async () => {
 
 test("warning signs cap what the agent may pay alone", async () => {
   answers.address = { toxicScore: 40, traits: [{ name: "mixer_transfers", risk: 40, txsCount: 2, description: "" }] };
-  const small = await out({ amountUsd: 0.1 });
+  const small = await out({ amountUsd: 0.05 });
   assert.equal(small.decision, "cap");
-  assert.equal(small.capUsd, 0.25);
+  assert.equal(small.capUsd, 0.1);
   const big = await out({ amountUsd: 1 });
   assert.equal(big.decision, "hold");
-  assert.match(big.reasons.at(-1)!, /over the \$0\.25/);
+  assert.match(big.reasons.at(-1)!, /over the \$0\.10/);
 });
 
 test("a clean payee above the auto-approve limit goes to the human", async () => {
   const v = await out({ amountUsd: 5 });
   assert.equal(v.decision, "hold");
-  assert.equal(v.capUsd, 2);
+  assert.equal(v.capUsd, 0.4);
 });
 
 test("a quote in anything but Arc's USDC is refused", async () => {
