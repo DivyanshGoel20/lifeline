@@ -20,6 +20,9 @@ import { screenOutgoing, verdictLine, Verdict } from "./intercepta";
 import { createHold } from "./holdStore";
 import type { X402Trace } from "@lifeline/sui";
 import { acquireLedgerLock, syncAgentDebts } from "./ledgerLock";
+import { creditRefusal } from "./riskControls";
+import { listingFor } from "./discovery";
+import { matchesSchema, recordSellerOutcome } from "./sellerQuality";
 
 // What Circle's BatchEvmScheme signs, reproduced so the authorisation
 // Intercepta screens is byte for byte the one that gets signed.
@@ -300,6 +303,7 @@ export class LifelineSigner {
       });
 
       if (!paidResponse.ok) {
+        noteSellerFailure(sellerAddress, paidResponse.status);
         const errJson = await paidResponse.json().catch(() => ({}));
         throw new Error(
           `Payment failed: ${(errJson.error || paidResponse.statusText) + (errJson.reason ? ` - ${errJson.reason}` : "")}`
@@ -315,6 +319,7 @@ export class LifelineSigner {
       }
 
       const data = await readBody(paidResponse);
+      noteSellerDelivery(sellerAddress, url, data);
       const x402 = this.trace({
         method, url, paymentRequired, requirements: batchingOption, payload: paymentPayload,
         signerRole: "agent", borrowedUsd: 0, status: paidResponse.status, settleResponse,
@@ -397,6 +402,26 @@ export class LifelineSigner {
             memo: lineBlocked,
           });
           throw new Error(`Lifeline: ${lineBlocked}`);
+        }
+        // Whatever this human's own line allows, Lifeline's limits come first.
+        const refused = creditRefusal({ human: humanOwner, amountUsd: shortfallAmount, seller: sellerAddress });
+        if (refused) {
+          recordPayment({
+            paymentId,
+            agentAddress: agentContext.agentAddress,
+            humanProfileId: humanOwner,
+            sellerAddress,
+            resourceUrl: url,
+            requestedAmount: requestedAmountFormatted,
+            agentGatewayBalance: formattedAvailable,
+            shortfall: shortfallAmount.toFixed(2),
+            fundingSource: "LIFELINE_FACILITY",
+            drawdownId: null,
+            status: "REJECTED_CREDIT",
+            timestamp: Date.now(),
+            memo: refused,
+          });
+          throw new Error(`Lifeline: ${refused}`);
         }
         // A suspended or delinquent agent borrows nothing, here as on /api/borrow.
         const standing = current?.status === "Suspended" || current?.status === "Delinquent" ? 0 : Number.POSITIVE_INFINITY;
@@ -485,6 +510,7 @@ export class LifelineSigner {
         });
 
         if (!paidResponse.ok) {
+          noteSellerFailure(sellerAddress, paidResponse.status);
           const errJson = await paidResponse.json().catch(() => ({}));
           recordPayment({
             paymentId,
@@ -568,6 +594,7 @@ export class LifelineSigner {
         }
 
         const data = await readBody(paidResponse);
+        noteSellerDelivery(sellerAddress, url, data);
         const x402 = this.trace({
           method, url, paymentRequired, requirements: batchingOption, payload: fundingPaymentPayload,
           signerRole: "lifeline", borrowedUsd: shortfallAmount, status: paidResponse.status, settleResponse,
@@ -811,6 +838,25 @@ export class LifelineSigner {
       payer: p.agentContext.agentAddress,
     };
   }
+}
+
+/**
+ * A server error is the seller failing to deliver. A 4xx is not counted: it can
+ * mean Lifeline's own request or signature was refused, which says nothing about
+ * the seller. The record must never get in the way of the purchase.
+ */
+function noteSellerFailure(seller: string, status: number) {
+  if (status < 500) return;
+  try {
+    recordSellerOutcome(seller, "failed");
+  } catch {}
+}
+
+/** Delivered, and in the format the seller's marketplace listing promised? */
+function noteSellerDelivery(seller: string, url: string, data: unknown) {
+  try {
+    recordSellerOutcome(seller, matchesSchema(listingFor(url)?.output, data) ? "delivered" : "malformed");
+  } catch {}
 }
 
 /**

@@ -2,6 +2,7 @@ import { acquireLedgerLock, syncAgentDebts } from "@/lib/ledgerLock";
 import { NextRequest, NextResponse } from "next/server";
 import { recordMandateSpend } from "@/lib/mandateSpend";
 import { borrowingBlocked } from "@/lib/standing";
+import { creditRefusal } from "@/lib/riskControls";
 import { unauthenticated } from "@/lib/session";
 import { hasCredential, overMandate, resolveSpender } from "@/lib/agentToken";
 import { BorrowRequest, BorrowResponse } from "@/types";
@@ -78,6 +79,10 @@ export async function POST(req: NextRequest) {
     const lineBlocked = borrowingBlocked(auth.spender.human, "arc");
     if (lineBlocked) {
       return NextResponse.json({ success: false, error: lineBlocked, code: "line_suspended" }, { status: 403 });
+    }
+    const refused = creditRefusal({ human: auth.spender.human, amountUsd: borrowAmount });
+    if (refused) {
+      return NextResponse.json({ success: false, error: refused, code: "credit_paused" }, { status: 403 });
     }
 
     if (agent.status === "Suspended" || agent.status === "Delinquent") {
