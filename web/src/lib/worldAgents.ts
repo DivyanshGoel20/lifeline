@@ -1,3 +1,4 @@
+import { worldBypassed } from "./worldBypass";
 import fs from "./storeFs";
 import path from "path";
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
@@ -30,7 +31,7 @@ const DEVICE_TTL_MS = 20 * 60 * 1000;
 const SKEW_MS = 30_000;
 
 const issuer = () => (process.env.WORLD_AGENTS_ISSUER || "https://sandbox.auth.world.org").replace(/\/$/, "");
-export const agentsConfigured = () => Boolean(process.env.WORLD_AGENTS_CLIENT_ID && process.env.WORLD_AGENTS_CLIENT_SECRET);
+export const agentsConfigured = () => !worldBypassed() && Boolean(process.env.WORLD_AGENTS_CLIENT_ID && process.env.WORLD_AGENTS_CLIENT_SECRET);
 
 type Endpoints = { token: string; device: string; jwks: string };
 let endpoints: Promise<Endpoints> | null = null;

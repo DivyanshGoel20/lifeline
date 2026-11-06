@@ -1,5 +1,6 @@
 "use client";
 
+import { worldBypassed } from "@/lib/worldBypass";
 import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { proofOfHuman, setDebug } from "@worldcoin/idkit";
@@ -31,7 +32,57 @@ interface WorldAuthGateProps {
  *   back, same browser:    session proof -> in
  *   back, other browser:   approve from World App (their wallet) -> in
  */
-export const WorldAuthGate: React.FC<WorldAuthGateProps> = ({ onVerified, onSignIn }) => {
+/** World ID is off for testing (see worldBypass): one click, and no proof of anything. */
+const TestSignIn: React.FC<WorldAuthGateProps> = ({ onVerified }) => {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const enter = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/test-session", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!data.nullifierHash) throw new Error(data.error || "Could not start a test account.");
+      if (data.error) setError(data.error);
+      onVerified(data.nullifierHash);
+    } catch (err: any) {
+      setError(err?.message ?? "Could not reach Lifeline.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header className="max-w-[1180px] w-full mx-auto px-6 sm:px-10 h-16 flex items-center">
+        <div className="flex items-center gap-2.5">
+          <LifelineMark size={18} />
+          <span className="serif text-[25px] leading-none tracking-tight">Lifeline</span>
+        </div>
+      </header>
+      <main className="flex-1 flex flex-col justify-center">
+        <div className="max-w-[1180px] w-full mx-auto px-6 sm:px-10 py-12 space-y-5">
+          <div className="lab">Test mode · Arc testnet</div>
+          <h1 className="serif text-[44px] leading-none">Credit for machines that spend.</h1>
+          <p className="text-[14px] ink-2 max-w-[56ch] leading-relaxed">
+            World ID is switched off for testing, so nothing here proves you are human. This browser gets a test
+            account with a $0.50 line. Only testnet money moves.
+          </p>
+          {error && <p className="mono text-[11px]" style={{ color: "var(--alarm)" }}>{error}</p>}
+          <button className="btn btn-solid" disabled={busy} onClick={enter}>
+            {busy ? "Opening…" : "Continue as a test account"}
+          </button>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export const WorldAuthGate: React.FC<WorldAuthGateProps> = (props) =>
+  worldBypassed() ? <TestSignIn {...props} /> : <RealWorldAuthGate {...props} />;
+
+const RealWorldAuthGate: React.FC<WorldAuthGateProps> = ({ onVerified, onSignIn }) => {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [rpContext, setRpContext] = useState<RpContext | null>(null);
