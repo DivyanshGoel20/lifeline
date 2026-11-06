@@ -41,7 +41,7 @@ credit, lending limits and more. What is new and how to run it:
 ```
 
 The rails are separate lines: own limit, debt, repayment record and agents.
-Both start at $10 and grow as the human repays.
+Both start at $0.50 and grow to $1 and then $2 as the human repays. A deposit raises the line further.
 
 ## How it works
 

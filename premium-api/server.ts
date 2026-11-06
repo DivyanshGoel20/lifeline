@@ -104,16 +104,16 @@ app.get(
  * Tiers, so the expensive paths can be exercised.
  *
  * A cent-priced endpoint never tests what happens when a charge is a
- * meaningful fraction of a ten dollar credit line. These do: a dollar draws
- * visibly against headroom, and five dollars twice over is refused, which is
- * the behaviour worth showing.
+ * meaningful fraction of a fifty cent credit line. These do: twenty cents draws
+ * visibly against headroom, and forty-five cents twice over is refused, which
+ * is the behaviour worth showing.
  *
  * Each returns an artefact rather than a payload, so the difference between
  * tiers is something you can see.
  */
 app.get(
   "/risk-curve",
-  gateway.require("$1.00"),
+  gateway.require("$0.20"),
   (req: PaidRequest, res) => {
     const { payer, amount, network } = req.payment!;
     res.json({
@@ -132,7 +132,7 @@ app.get(
 
 app.get(
   "/dossier",
-  gateway.require("$5.00"),
+  gateway.require("$0.45"),
   (req: PaidRequest, res) => {
     const { payer, amount, network } = req.payment!;
     res.json({
@@ -203,8 +203,8 @@ app.get("/catalogue", (_req, res) => {
   res.json({
     resources: [
       { path: "/premium-data", price: 0.01, title: "Alpha signal", artifact: "json" },
-      { path: "/risk-curve", price: 1.0, title: "Exposure curve \u00b7 30d", artifact: "svg" },
-      { path: "/dossier", price: 5.0, title: "Underwriting dossier", artifact: "svg" },
+      { path: "/risk-curve", price: 0.2, title: "Exposure curve \u00b7 30d", artifact: "svg" },
+      { path: "/dossier", price: 0.45, title: "Underwriting dossier", artifact: "svg" },
       { path: "/unvetted", price: 0.01, title: "Unvetted feed", artifact: "json" },
       { path: "/lookalike", price: 0.01, title: 'Discount feed (pays in "USDC")', artifact: "json" },
     ],

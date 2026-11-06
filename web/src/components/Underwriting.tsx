@@ -75,7 +75,7 @@ export const Underwriting: React.FC<{
           <div className="lab mb-1.5">tier {tier?.tierNumber ?? 1}</div>
           <div className="serif text-[20px] leading-tight">{tier?.name.replace(/^Tier \d+:\s*/, "") ?? "Starter Line"}</div>
         </div>
-        <div className="readout text-[24px]">${(tier?.creditLimit ?? 10).toFixed(0)}</div>
+        <div className="readout text-[24px]">${(tier?.creditLimit ?? 0.5).toFixed(2)}</div>
       </div>
 
       {loan && (
@@ -90,7 +90,7 @@ export const Underwriting: React.FC<{
       {next && (
         <div className="pt-4">
           <div className="lab mb-3">
-            to {next.name.replace(/^Tier \d+:\s*/, "")} · ${next.creditLimit.toFixed(0)} line
+            to {next.name.replace(/^Tier \d+:\s*/, "")} · ${next.creditLimit.toFixed(2)} line
           </div>
           <div className="space-y-3">
             {steps.map((s) => {

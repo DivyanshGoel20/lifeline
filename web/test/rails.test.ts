@@ -19,24 +19,24 @@ const HUMAN = "0x" + "d4".repeat(32);
 const AGENT = ("0x" + "44".repeat(20)) as `0x${string}`;
 addAgentToStore({ address: AGENT, name: "a", humanOwner: HUMAN, creditLimit: 10, outstandingDebt: 0, totalBorrowed: 0, totalRepaid: 0, currentBalance: 0 } as any);
 
-test("each rail starts with its own $10 line", () => {
-  assert.equal(getHumanFacilityStats(HUMAN).totalAvailableCredit, 10);
-  assert.equal(getSuiFacilityStats(HUMAN).availableCredit, 10);
+test("each rail starts with its own $0.50 line", () => {
+  assert.equal(getHumanFacilityStats(HUMAN).totalAvailableCredit, 0.5);
+  assert.equal(getSuiFacilityStats(HUMAN).availableCredit, 0.5);
 });
 
 test("what Sui draws uses the Sui line only", () => {
-  openRailDebt({ humanOwner: HUMAN, rail: "sui", agentAddress: AGENT, amountUsd: 4, obligationId: "0xob1", resource: "/risk" });
-  assert.equal(getSuiFacilityStats(HUMAN).availableCredit, 6);
-  assert.equal(getHumanFacilityStats(HUMAN).totalAvailableCredit, 10, "Arc is untouched");
+  openRailDebt({ humanOwner: HUMAN, rail: "sui", agentAddress: AGENT, amountUsd: 0.2, obligationId: "0xob1", resource: "/risk" });
+  assert.equal(getSuiFacilityStats(HUMAN).availableCredit, 0.3);
+  assert.equal(getHumanFacilityStats(HUMAN).totalAvailableCredit, 0.5, "Arc is untouched");
 });
 
 test("what Arc owes uses the Arc line only", () => {
-  updateAgentInStore(AGENT, { outstandingDebt: 7 });
-  assert.equal(getHumanFacilityStats(HUMAN).totalAvailableCredit, 3);
-  assert.equal(getSuiFacilityStats(HUMAN).availableCredit, 6, "Sui is untouched");
+  updateAgentInStore(AGENT, { outstandingDebt: 0.3 });
+  assert.equal(getHumanFacilityStats(HUMAN).totalAvailableCredit, 0.2);
+  assert.equal(getSuiFacilityStats(HUMAN).availableCredit, 0.3, "Sui is untouched");
   updateAgentInStore(AGENT, { outstandingDebt: 0 });
   settleObligation("0xob1");
-  assert.equal(getSuiFacilityStats(HUMAN).availableCredit, 10);
+  assert.equal(getSuiFacilityStats(HUMAN).availableCredit, 0.5);
 });
 
 test("repaying on one rail builds that rail's record, and only that one", async () => {
@@ -47,8 +47,8 @@ test("repaying on one rail builds that rail's record, and only that one", async 
 
 test("Sui's line grows on repayments and time, since Sui charges no fee", async () => {
   // Tier 2 needs 3 repayments over 7 days (and a fee, on Arc): 3 x 3 days.
-  assert.equal(getHumanCreditTier(HUMAN, "sui").creditLimit, 25);
-  assert.equal(getHumanCreditTier(HUMAN, "arc").creditLimit, 10, "Arc's limit did not move");
+  assert.equal(getHumanCreditTier(HUMAN, "sui").creditLimit, 1);
+  assert.equal(getHumanCreditTier(HUMAN, "arc").creditLimit, 0.5, "Arc's limit did not move");
 });
 
 /* ---- agents belong to one rail --------------------------------------- */
@@ -73,6 +73,6 @@ test("an Arc agent cannot pay on Sui", async () => {
 });
 
 test("Arc's line counts Arc agents only", () => {
-  updateAgentInStore(SUI_AGENT, { outstandingDebt: 5 }); // a stray figure on a Sui agent
-  assert.equal(getHumanFacilityStats(HUMAN).totalAvailableCredit, 10);
+  updateAgentInStore(SUI_AGENT, { outstandingDebt: 0.1 }); // a stray figure on a Sui agent
+  assert.equal(getHumanFacilityStats(HUMAN).totalAvailableCredit, 0.5);
 });

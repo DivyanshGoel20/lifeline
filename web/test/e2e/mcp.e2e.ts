@@ -116,7 +116,7 @@ async function main() {
     const q = await tool("lifeline_quote", { url: `${PREMIUM}/premium-data` });
     console.log(indent(q.text));
     check("quotes without paying", /wants payment/.test(q.text));
-    const tooDear = await tool("lifeline_buy", { url: `${PREMIUM}/risk-curve`, maxUsd: 0.5 });
+    const tooDear = await tool("lifeline_buy", { url: `${PREMIUM}/risk-curve`, maxUsd: 0.1 });
     check("refuses a price over its own limit, before paying", tooDear.isError && /over your limit/.test(tooDear.text), tooDear.text);
     const ssrf = await tool("lifeline_buy", { url: "http://169.254.169.254/latest/meta-data" });
     check("Lifeline will not fetch a private-network URL", ssrf.isError && /private network/.test(ssrf.text), ssrf.text.split("\n")[0]);

@@ -15,6 +15,7 @@ import { depositToAgentGateway } from "./disburse";
 import { refHash } from "./paymentRef";
 import { ARC_TREASURY } from "./browserChain";
 import { collateralCreditUsd } from "./collateralStore";
+import { CREDIT_TIERS } from "./reputationEngine";
 
 export const arcTestnetChain = defineChain({
   id: ARC_TESTNET_CHAIN_ID,
@@ -785,7 +786,7 @@ export async function syncAgentToContractOnChain(
 
 /**
  * Ensures an on-chain credit profile exists for a World ID human operator on Arc Testnet.
- * If the profile does not exist yet, initializes it with a $10.00 USDC credit limit.
+ * If the profile does not exist yet, initializes it with the first tier's USDC credit limit.
  */
 export async function ensureHumanProfileOnChain(
   humanOwner: string
@@ -813,13 +814,13 @@ export async function ensureHumanProfileOnChain(
       .catch(() => null)) as any;
 
     if (!existing || Number(existing.createdAt) === 0) {
-      console.log(`[OnChainProfile] Provisioning $10 on-chain profile on Arc Testnet for World ID operator ${humanOwner}...`);
+      console.log(`[OnChainProfile] Provisioning starter on-chain profile on Arc Testnet for World ID operator ${humanOwner}...`);
       const humanRoot = computeProfileId(humanOwner);
       const createTx = await walletClient.writeContract({
         address: LIFELINE_CREDIT_FACILITY_ADDRESS,
         abi: LIFELINE_CREDIT_FACILITY_ABI,
         functionName: "createCreditProfile",
-        args: [profileId, account.address, humanRoot, parseUnits("10", 6)],
+        args: [profileId, account.address, humanRoot, parseUnits(String(CREDIT_TIERS[0].creditLimit), 6)],
       });
       await publicClient.waitForTransactionReceipt({ hash: createTx });
       console.log(`[OnChainProfile] Provisioned profile ${profileId} on Arc Testnet in tx ${createTx}`);
@@ -1115,12 +1116,12 @@ export async function fetchCompleteContractTelemetry(
           profileId,
           humanOwner: humanOwner,
           humanRoot: computeProfileId(humanOwner),
-          creditLimit: 10,
-          creditLimitRaw: "10000000",
+          creditLimit: CREDIT_TIERS[0].creditLimit,
+          creditLimitRaw: String(parseUnits(String(CREDIT_TIERS[0].creditLimit), 6)),
           outstandingDebt: 0,
           outstandingDebtRaw: "0",
-          remainingCredit: 10,
-          remainingCreditRaw: "10000000",
+          remainingCredit: CREDIT_TIERS[0].creditLimit,
+          remainingCreditRaw: String(parseUnits(String(CREDIT_TIERS[0].creditLimit), 6)),
           totalBorrowed: 0,
           totalBorrowedRaw: "0",
           totalRepaid: 0,

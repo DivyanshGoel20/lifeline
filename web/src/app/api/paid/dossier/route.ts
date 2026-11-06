@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { dossierSvg } from "@/lib/artifacts";
 import { requirePayment } from "@/lib/x402Gateway";
 
-const PRICE_USD = 5.00;
+const PRICE_USD = 0.45;
 const TITLE = "Underwriting dossier";
 
 export async function GET(req: NextRequest) {

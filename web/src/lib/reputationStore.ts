@@ -94,7 +94,8 @@ export function getHumanReputationRecord(humanOwner: string, rail: RecordRail = 
 export function getHumanCreditTier(humanOwner: string, rail: RecordRail = "arc"): CreditTier {
   const record = getHumanReputationRecord(humanOwner, rail);
   const tier = CREDIT_TIERS.find((t) => t.tierNumber === record.currentTierNumber);
-  return tier || CREDIT_TIERS[0];
+  // A record from when there were more tiers keeps the top one, not the first.
+  return tier || CREDIT_TIERS[CREDIT_TIERS.length - 1];
 }
 
 /**

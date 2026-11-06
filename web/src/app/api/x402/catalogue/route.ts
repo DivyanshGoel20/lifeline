@@ -47,8 +47,8 @@ export async function GET(req: NextRequest) {
     base: appBase,
     resources: [
       { path: "/api/paid/signal", price: 0.01, title: "Alpha Signal Intelligence", artifact: "json" },
-      { path: "/api/paid/risk-curve", price: 1.0, title: "Exposure curve · 30d", artifact: "svg" },
-      { path: "/api/paid/dossier", price: 5.0, title: "Underwriting dossier", artifact: "svg" },
+      { path: "/api/paid/risk-curve", price: 0.2, title: "Exposure curve · 30d", artifact: "svg" },
+      { path: "/api/paid/dossier", price: 0.45, title: "Underwriting dossier", artifact: "svg" },
       { path: "/api/paid/unvetted", price: 0.01, title: "Unvetted feed", artifact: "json" },
       { path: "/api/paid/lookalike", price: 0.01, title: "Discount feed (pays in \"USDC\")", artifact: "json" },
     ],

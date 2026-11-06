@@ -10,11 +10,16 @@ export interface CreditTier {
   badgeColor: string;
 }
 
+/**
+ * Deliberately small: a line is unsecured, so it starts at what one person can
+ * afford to lose and grows only on a record of repaying. Anything larger is
+ * backed by a deposit (see collateralStore).
+ */
 export const CREDIT_TIERS: CreditTier[] = [
   {
     tierNumber: 1,
     name: "Tier 1: Starter Line",
-    creditLimit: 10,
+    creditLimit: 0.5,
     requiredInterestPaid: 0,
     requiredActiveDurationDays: 0,
     requiredRepaymentsCount: 0,
@@ -23,8 +28,8 @@ export const CREDIT_TIERS: CreditTier[] = [
   {
     tierNumber: 2,
     name: "Tier 2: Growth Operator",
-    creditLimit: 25,
-    requiredInterestPaid: 0.10,
+    creditLimit: 1,
+    requiredInterestPaid: 0.01,
     requiredActiveDurationDays: 7,
     requiredRepaymentsCount: 3,
     badgeColor: "cyan",
@@ -32,20 +37,11 @@ export const CREDIT_TIERS: CreditTier[] = [
   {
     tierNumber: 3,
     name: "Tier 3: Autonomous Fleet",
-    creditLimit: 50,
-    requiredInterestPaid: 0.50,
+    creditLimit: 2,
+    requiredInterestPaid: 0.05,
     requiredActiveDurationDays: 14,
     requiredRepaymentsCount: 10,
     badgeColor: "violet",
-  },
-  {
-    tierNumber: 4,
-    name: "Tier 4: Enterprise Prime",
-    creditLimit: 100,
-    requiredInterestPaid: 2.00,
-    requiredActiveDurationDays: 30,
-    requiredRepaymentsCount: 25,
-    badgeColor: "amber",
   },
 ];
 

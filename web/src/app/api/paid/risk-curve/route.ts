@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { riskCurveSvg } from "@/lib/artifacts";
 import { requirePayment } from "@/lib/x402Gateway";
 
-const PRICE_USD = 1.00;
+const PRICE_USD = 0.2;
 const TITLE = "Exposure curve · 30d";
 
 export async function GET(req: NextRequest) {

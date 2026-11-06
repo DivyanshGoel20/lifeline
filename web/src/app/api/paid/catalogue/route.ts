@@ -14,14 +14,14 @@ export async function GET() {
       },
       {
         path: "/api/paid/risk-curve",
-        price: 1.00,
+        price: 0.2,
         title: "Exposure curve · 30d",
         artifact: "svg",
         description: "Visual credit waterline SVG. Tests moderate drawdown against the credit line."
       },
       {
         path: "/api/paid/dossier",
-        price: 5.00,
+        price: 0.45,
         title: "Underwriting dossier",
         artifact: "svg",
         description: "Comprehensive risk report SVG. Tests significant overdraft and fails closed if credit limit exceeded."
