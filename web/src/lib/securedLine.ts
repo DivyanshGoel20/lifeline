@@ -160,6 +160,16 @@ export function depositCalls(human: string, amountUsd: number) {
   ];
 }
 
+/** What a browser wallet signs to prove it belongs to the signed-in human. */
+export const linkMessage = (nonce: string) => `Link this wallet to my Lifeline account.\nNonce: ${nonce}`;
+
+/** The transaction to take back a request to withdraw. */
+export function cancelWithdrawalCalls(human: string) {
+  return [
+    { to: requireVault(), data: encodeFunctionData({ abi: VAULT_ABI, functionName: "cancelWithdrawal", args: [computeProfileId(human)] }), description: "Cancel the withdrawal" },
+  ];
+}
+
 /** The transactions to take a deposit out: ask, wait out the delay, then withdraw. */
 export function withdrawalCalls(human: string, amountUsd: number, to: string) {
   const vault = requireVault();

@@ -43,6 +43,10 @@ export type Wallet = {
    * the transaction hash - the receipt the repay route checks on chain.
    */
   payTreasury: (amountUsd: number) => Promise<`0x${string}`>;
+  /** Send transactions in order on Arc, waiting for each to confirm. Returns their hashes. */
+  sendCalls: (calls: { to: string; data: string }[]) => Promise<`0x${string}`[]>;
+  /** Sign a plain text message with the connected wallet. */
+  signMessage: (message: string) => Promise<`0x${string}`>;
 };
 
 export function useWallet(): Wallet {
@@ -142,6 +146,44 @@ export function useWallet(): Wallet {
     [address]
   );
 
+  const sendCalls = useCallback(
+    async (calls: { to: string; data: string }[]) => {
+      const eth = provider();
+      if (!eth || !address) throw new Error("Connect a wallet first.");
+      await ensureArcNetwork(eth);
+      const hashes: `0x${string}`[] = [];
+      for (const call of calls) {
+        const hash = (await eth.request({
+          method: "eth_sendTransaction",
+          params: [{ from: address, to: call.to, data: call.data }],
+        })) as `0x${string}`;
+        hashes.push(hash);
+        // The next call may depend on this one (an approve, then a deposit).
+        for (let i = 0; ; i++) {
+          const receipt = await eth.request({ method: "eth_getTransactionReceipt", params: [hash] });
+          if (receipt) {
+            if (receipt.status !== "0x1") throw new Error(`Transaction ${hash} reverted.`);
+            break;
+          }
+          if (i >= 60) throw new Error(`Transaction ${hash} has not confirmed yet.`);
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+      }
+      return hashes;
+    },
+    [address]
+  );
+
+  const signMessage = useCallback(
+    async (message: string) => {
+      const eth = provider();
+      if (!eth || !address) throw new Error("Connect a wallet first.");
+      const hex = `0x${Array.from(new TextEncoder().encode(message), (b) => b.toString(16).padStart(2, "0")).join("")}`;
+      return (await eth.request({ method: "personal_sign", params: [hex, address] })) as `0x${string}`;
+    },
+    [address]
+  );
+
   return {
     available: Boolean(provider()),
     address,
@@ -152,5 +194,7 @@ export function useWallet(): Wallet {
     connect,
     switchToArc,
     payTreasury,
+    sendCalls,
+    signMessage,
   };
 }
