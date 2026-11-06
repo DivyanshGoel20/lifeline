@@ -18,6 +18,8 @@ import { returnRepaymentToPool } from "./poolFunding";
  *
  *   agent wallet    the agent's USDC moves to the treasury, then it is booked
  *   browser wallet  a verified transfer receipt, then it is booked
+ *   jar             a token reached the Token Jar on Base (see lifelineJar); no
+ *                   USDC moves on Arc until the jar clears, so only the booking is written
  *   card            Stripe says the human paid (Apple Pay, Google Pay, card);
  *                   no USDC moves - Lifeline was paid in dollars - so only the
  *                   booking is written
@@ -54,7 +56,7 @@ export async function commitArcRepayment(p: {
   beneficiaryAddress: string;
   amount: number;
   targetLoanId?: string;
-  funding: { kind: "agent" } | { kind: "receipt"; txHash: `0x${string}` } | { kind: "card"; reference: string };
+  funding: { kind: "agent" } | { kind: "receipt"; txHash: `0x${string}` } | { kind: "card"; reference: string } | { kind: "jar"; reference: string };
 }) {
   const onChain = await executeOnChainRepayment({
     humanOwner: p.humanOwner,
@@ -62,7 +64,7 @@ export async function commitArcRepayment(p: {
     agentAddress: p.beneficiaryAddress,
     amountUsdc: p.amount,
     alreadyTransferred: p.funding.kind === "receipt" ? p.funding.txHash : undefined,
-    fundedOffChain: p.funding.kind === "card" ? p.funding.reference : undefined,
+    fundedOffChain: p.funding.kind === "card" || p.funding.kind === "jar" ? p.funding.reference : undefined,
   });
 
   // The agent's own transfer is a receipt too: claimed here, so nobody can

@@ -23,6 +23,7 @@ import { SecuredCredit } from "@/components/arc/SecuredCredit";
 import { LendingPool } from "@/components/arc/LendingPool";
 import { LendingLimits } from "@/components/arc/LendingLimits";
 import { CrossChainRepay } from "@/components/arc/CrossChainRepay";
+import { RepayAnyToken } from "@/components/arc/RepayAnyToken";
 import { useLifeline } from "@/lib/useLifeline";
 import { useWallet } from "@/lib/useWallet";
 import type { Rail } from "@/types";
@@ -126,6 +127,11 @@ export function Dashboard({ rail }: { rail: Rail }) {
               </div>
             </div>
             <LendingPool wallet={wallet} refreshTrigger={L.refreshTrigger} onChanged={L.done} />
+            <RepayAnyToken
+              agents={L.agents.filter((a) => (a.rail ?? "arc") === "arc").map((a) => ({ address: a.address, name: a.name }))}
+              refreshTrigger={L.refreshTrigger}
+              onChanged={L.done}
+            />
           </div>
         )}
       </main>

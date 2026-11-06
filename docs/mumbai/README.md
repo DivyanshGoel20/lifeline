@@ -8,7 +8,7 @@ Everything after it is new. See exactly what changed with:
 git diff pre-mumbai HEAD --stat
 ```
 
-**Bounty:** Arc Studio Continuity Track: Bring Your Project to Arc.
+**Bounties:** Arc Studio Continuity Track: Bring Your Project to Arc. Uniswap, see [uniswap.md](uniswap.md).
 
 ## What is new
 
@@ -21,6 +21,7 @@ git diff pre-mumbai HEAD --stat
 | Lending pool | `contracts/src/LifelineLendingPool.sol`, `GET /api/pool` | Lenders fund the credit and earn borrowers' payments, with limits enforced in the contract |
 | New credit tiers | `web/src/lib/reputationEngine.ts` | Unsecured lines start at $0.50, then $1 and $2. A deposit raises them further |
 | Screens for all of this | `web/src/components/arc/` | Marketplace, deposit-backed credit, lending pool, limits and cross-chain repayment on the Arc dashboard |
+| Repay in any token | `web/src/lib/lifelineJar.ts`, `/api/jar`, [uniswap.md](uniswap.md) | Agents pay debt with tokens on Base through a Uniswap Token Jar. Built and tested on a fork, not deployed |
 | Cross-chain repayment | `web/src/lib/crosschainRepay.ts`, `POST /api/repay/crosschain` | Bridge Kit moves an agent's USDC to Arc, then repays the debt with what arrived |
 
 ## Architecture
@@ -52,6 +53,8 @@ flowchart TB
   App -->|draw and repay| Pool
 
   Other[USDC on another chain] -->|Bridge Kit, CCTP| App
+  Tokens[WETH, UNI, cbBTC on Base] -->|priced by Uniswap| Jar[Uniswap Token Jar on Base]
+  Jar -->|cleared for USDC, then Bridge Kit| App
 ```
 
 ## What runs on Arc
@@ -62,6 +65,7 @@ flowchart TB
 | Discovery API | The marketplace: 134 services that accept Arc testnet | Yes, including a purchase from a real seller |
 | USDC as gas | All contracts and wallets | Yes |
 | Bridge Kit (CCTP) | Repaying Arc debt from other chains | No: needs USDC on another testnet |
+| Borrow Kit | Not used on purpose: it lends USDC against cirBTC, and Lifeline is the lender | n/a |
 | Earn (ERC-4626 "Morpho USDC Vault", `0x8f2d…d2dc`) | Deposits earn while they back credit | Yes, deposit and seizure through it. It is Arc testnet's vault, listed as a mock of Morpho |
 | Arc Studio | Contracts, tests, screens, deployment | Yes |
 

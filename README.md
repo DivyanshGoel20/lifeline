@@ -239,3 +239,9 @@ npm run e2e:mcp               # Claude Code tools end to end
 | Sui `Facility<USDC>` | [`0x24d4736a…`](https://suiscan.xyz/testnet/object/0x24d4736a368e7c1e3ef1acddaa9560252e0c0ea5a08e90ab8c45bcf9481bb73e) |
 | On-chain collection by a stranger / a recorded default | [`8221agWL…`](https://suiscan.xyz/testnet/tx/8221agWL1vqYysTnWXLUqdHpbYAmRcChpprq5LyZtrL4) / [`Gy9Apwq5…`](https://suiscan.xyz/testnet/tx/Gy9Apwq5Qf7s9giAGNfirnoHTpGFo9VoWZR5owhAwgMt) |
 | App / Arc seller / Sui seller | [web](https://lifeline-arc.vercel.app) · [premium](https://lifeline-premium.vercel.app) · [feed](https://lifeline-feed.vercel.app) |
+
+## ETHGlobal Mumbai
+
+What is new since Tokyo, and how it was built: [docs/mumbai](docs/mumbai/README.md).
+Uniswap integration, with links to the code: [docs/mumbai/uniswap.md](docs/mumbai/uniswap.md).
+Feedback for Uniswap: [FEEDBACK.md](FEEDBACK.md).

@@ -16,7 +16,8 @@
     "e2e:world-agents": "tsx --env-file-if-exists=../.env test/e2e/world-agents.e2e.ts",
     "e2e:mcp": "tsx --env-file-if-exists=../.env test/e2e/mcp.e2e.ts",
     "e2e:standing": "tsx --env-file-if-exists=../.env test/e2e/standing.e2e.ts",
-    "e2e:secured": "tsx --env-file-if-exists=../.env test/e2e/secured.e2e.ts"
+    "e2e:secured": "tsx --env-file-if-exists=../.env test/e2e/secured.e2e.ts",
+    "e2e:jar": "tsx test/e2e/jar.fork.e2e.ts"
   },
   "dependencies": {
     "@circle-fin/adapter-viem-v2": "^1.20.1",

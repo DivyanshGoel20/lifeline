@@ -4,6 +4,7 @@ import { getAllAgents } from "@/lib/agentStore";
 import { enforceStanding, standingHumans } from "@/lib/standing";
 import { reconcileSui, suiConfigured } from "@/lib/suiRail";
 import { seizeCollateral, vaultAddress } from "@/lib/securedLine";
+import { clearJar, jarConfigured } from "@/lib/lifelineJar";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,9 @@ export async function POST(req: NextRequest) {
       if (s.takenUsd > 0 || "error" in s) seized.push({ human: `${h.slice(0, 10)}…`, ...s });
     }
   }
-  return NextResponse.json({ checked: humans.size, notGood: changed, seized, sui });
+  // Worth clearing? Failing here must not lose the sweep's report.
+  const jar = jarConfigured() ? await clearJar().catch((err) => ({ cleared: false, error: String(err?.message ?? err) })) : undefined;
+  return NextResponse.json({ jar, checked: humans.size, notGood: changed, seized, sui });
 }
 
 /** Vercel's cron calls with GET, and the same bearer token. */

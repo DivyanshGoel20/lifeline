@@ -641,9 +641,14 @@ server.registerTool(
         .enum(["Ethereum_Sepolia", "Base_Sepolia", "Arbitrum_Sepolia", "Optimism_Sepolia", "Polygon_Amoy_Testnet", "Avalanche_Fuji", "Unichain_Sepolia"])
         .optional()
         .describe("Arc only: repay with USDC the agent holds on this chain, bridged to Arc first"),
+      token: z
+        .enum(["WETH", "UNI", "cbBTC"])
+        .optional()
+        .describe("Arc only: repay with this token from the agent's wallet on Base, through the Uniswap Token Jar"),
+      tokenAmount: z.string().optional().describe("How much of that token, as a decimal string. It does not come back."),
     },
   },
-  async ({ amountUsd, fromChain }) => {
+  async ({ amountUsd, fromChain, token, tokenAmount }) => {
     const g = await ensureConnected();
     if (!g.ok) return text(g.text);
     const me = await api("/api/agent/me", { bearer: g.c.token });
@@ -655,6 +660,12 @@ server.registerTool(
       return text(
         `Owes ${usd(owes)} on Sui. Sui repayments are parked on chain and settle from the agent's earnings when due; the human can also settle early from the dashboard.`
       );
+    }
+    if (token) {
+      if (!tokenAmount) return fail("Say how much of the token to send: tokenAmount.");
+      const j = await api("/api/jar", { body: { agentAddress: g.c.agent.address, token, amount: tokenAmount }, bearer: g.c.token });
+      if (!j.data.success) return fail(`Not repaid: ${j.data.error ?? `status ${j.status}`}`);
+      return text(`Sent ${tokenAmount} ${token} to the Token Jar. Repaid ${usd(j.data.repaidUsd)} (${j.data.repayTxHash}).`);
     }
     const amount = Math.min(amountUsd ?? owes, owes);
     if (fromChain) {
