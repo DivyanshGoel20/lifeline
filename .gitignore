@@ -57,3 +57,5 @@ Thumbs.db
 # Runtime ledgers written by the app - state, not source
 web/data/*.json
 data/*.json
+
+.vercel
