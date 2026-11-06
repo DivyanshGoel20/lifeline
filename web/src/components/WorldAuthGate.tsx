@@ -45,7 +45,7 @@ const TestSignIn: React.FC<WorldAuthGateProps> = ({ onVerified }) => {
       const data = await res.json().catch(() => ({}));
       if (!data.nullifierHash) throw new Error(data.error || "Could not start a test account.");
       if (data.error) setError(data.error);
-      onVerified(data.nullifierHash);
+      onVerified?.(data.nullifierHash);
     } catch (err: any) {
       setError(err?.message ?? "Could not reach Lifeline.");
     } finally {
