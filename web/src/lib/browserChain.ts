@@ -12,17 +12,17 @@
  * can read. On Arc, USDC is the native currency at 18 decimals rather than an
  * ERC-20, which is why a repayment here is a plain value transfer.
  */
-import { ARC_TESTNET_CHAIN_ID, ARC_TESTNET_NAME } from "./arc";
+import { ARC_CHAIN_ID, ARC_EXPLORER, ARC_NAME, ARC_PUBLIC_RPC } from "./arc";
 
-/** Arc testnet, as EIP-3085 wants it. */
+/** Arc, as EIP-3085 wants it. */
 export const ARC_CHAIN_PARAMS = {
-  chainId: `0x${ARC_TESTNET_CHAIN_ID.toString(16)}`,
-  chainName: ARC_TESTNET_NAME,
+  chainId: `0x${ARC_CHAIN_ID.toString(16)}`,
+  chainName: ARC_NAME,
   nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
   // The public endpoint, not ARC_RPC_URL: this is handed to someone else's
   // wallet, and a private or local override would leave it unable to sync.
-  rpcUrls: ["https://rpc.testnet.arc.network"],
-  blockExplorerUrls: ["https://testnet.arcscan.app"],
+  rpcUrls: [ARC_PUBLIC_RPC],
+  blockExplorerUrls: [ARC_EXPLORER],
 } as const;
 
 type Eip1193 = { request: (args: { method: string; params?: unknown[] }) => Promise<any> };
@@ -61,7 +61,7 @@ export async function ensureArcNetwork(ethereum: Eip1193): Promise<void> {
   const after = await ethereum.request({ method: "eth_chainId" });
   if (typeof after !== "string" || after.toLowerCase() !== ARC_CHAIN_ID_HEX) {
     throw new Error(
-      `Your wallet is still on chain ${after}. Switch it to ${ARC_TESTNET_NAME} to settle — ` +
+      `Your wallet is still on chain ${after}. Switch it to ${ARC_NAME} to settle — ` +
         `sending on another chain would move real funds Lifeline cannot see.`
     );
   }

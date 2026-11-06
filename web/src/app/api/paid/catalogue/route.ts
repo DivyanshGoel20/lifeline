@@ -1,8 +1,9 @@
+import { ARC_LABEL } from "@/lib/arc";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   return NextResponse.json({
-    network: "Arc Testnet (5042002)",
+    network: ARC_LABEL,
     settlement: "Circle Gateway / Lifeline overdraft",
     resources: [
       {

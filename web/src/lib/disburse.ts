@@ -1,3 +1,4 @@
+import { ARC_GATEWAY_CHAIN } from "./arc";
 import { GatewayClient } from "@circle-fin/x402-batching/client";
 
 /**
@@ -21,7 +22,7 @@ export async function depositToAgentGateway(
     process.env.PRIVATE_KEY) as `0x${string}`;
   if (!key) throw new Error("Missing LIFELINE_FUNDING_PRIVATE_KEY for disbursement");
 
-  const client = new GatewayClient({ chain: "arcTestnet", privateKey: key });
+  const client = new GatewayClient({ chain: ARC_GATEWAY_CHAIN, privateKey: key });
 
   // depositFor credits the balance to `depositor` rather than to the caller,
   // so the funds become the agent's spending capacity while the debt stays

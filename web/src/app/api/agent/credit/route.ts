@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAgentByAddress, getHumanFacilityStats, agentRail } from "@/lib/agentStore";
 import { resolveAgentReader } from "@/lib/agentToken";
-import { ARC_TESTNET_CHAIN_ID, ARC_TESTNET_NAME, LIFELINE_CREDIT_FACILITY_ADDRESS } from "@/lib/arc";
+import { ARC_CHAIN_ID, ARC_NAME, LIFELINE_CREDIT_FACILITY_ADDRESS } from "@/lib/arc";
 
 export async function GET(req: NextRequest) {
   try {
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
         totalAvailableCredit: facility.totalAvailableCredit,
         agentCount: facility.agentCount,
       },
-      network: `${ARC_TESTNET_NAME} (${ARC_TESTNET_CHAIN_ID})`,
+      network: `${ARC_NAME} (${ARC_CHAIN_ID})`,
       facilityContractAddress: LIFELINE_CREDIT_FACILITY_ADDRESS,
       timestamp: Date.now(),
     });

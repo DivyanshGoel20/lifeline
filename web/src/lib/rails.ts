@@ -1,3 +1,4 @@
+import { ARC_LABEL } from "./arc";
 /**
  * Lifeline settlement rails: Arc and Sui.
  *
@@ -16,7 +17,7 @@ export const RAIL_FACTS: Record<
   { network: string; facilitator: string; mechanism: string; resource: string }
 > = {
   arc: {
-    network: "Arc testnet (Chain 5042002)",
+    network: ARC_LABEL,
     facilitator: "Circle Gateway",
     mechanism: "batched settlement",
     resource: "Lifeline Premium API",

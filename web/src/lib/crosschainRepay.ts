@@ -1,4 +1,5 @@
 import { getAgentPrivateKey, authorizeAgentSpend } from "./agentKeys";
+import { ARC_BRIDGE_CHAIN, ARC_IS_MAINNET } from "./arc";
 import { getAgentWalletUsdc } from "./walletBalance";
 import { commitArcRepayment, prepareArcRepayment } from "./repayCore";
 import { acquireLedgerLock } from "./ledgerLock";
@@ -12,16 +13,11 @@ import type { Agent } from "@/types";
  * other wallet repayment would. The bridge can take minutes, so the ledger stays
  * unlocked until the money has arrived.
  */
-export const BRIDGE_CHAINS = [
-  "Ethereum_Sepolia",
-  "Base_Sepolia",
-  "Arbitrum_Sepolia",
-  "Optimism_Sepolia",
-  "Polygon_Amoy_Testnet",
-  "Avalanche_Fuji",
-  "Unichain_Sepolia",
-] as const;
-export type BridgeChain = (typeof BRIDGE_CHAINS)[number];
+const TESTNET_CHAINS = ["Ethereum_Sepolia", "Base_Sepolia", "Arbitrum_Sepolia", "Optimism_Sepolia", "Polygon_Amoy_Testnet", "Avalanche_Fuji", "Unichain_Sepolia"] as const;
+const MAINNET_CHAINS = ["Ethereum", "Base", "Arbitrum", "Optimism", "Polygon", "Avalanche", "Unichain"] as const;
+export type BridgeChain = (typeof TESTNET_CHAINS)[number] | (typeof MAINNET_CHAINS)[number];
+/** Money cannot cross between testnets and mainnets, so each deployment offers its own. */
+export const BRIDGE_CHAINS: readonly BridgeChain[] = ARC_IS_MAINNET ? MAINNET_CHAINS : TESTNET_CHAINS;
 export const isBridgeChain = (c: unknown): c is BridgeChain => BRIDGE_CHAINS.includes(c as BridgeChain);
 
 export type Bridger = (p: { privateKey: `0x${string}`; from: BridgeChain; amountUsd: number }) => Promise<{ state: string; steps: { name?: string; state?: string; txHash?: string; errorMessage?: string }[] }>;
@@ -35,7 +31,7 @@ const bridgeWithKit: Bridger = async ({ privateKey, from, amountUsd }) => {
   const adapter = createViemAdapterFromPrivateKey({ privateKey });
   const result = await new BridgeKit().bridge({
     from: { adapter, chain: from },
-    to: { adapter, chain: "Arc_Testnet" },
+    to: { adapter, chain: ARC_BRIDGE_CHAIN },
     amount: amountUsd.toFixed(6),
   } as any);
   return { state: result.state, steps: result.steps as any };

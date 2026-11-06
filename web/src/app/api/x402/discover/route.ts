@@ -1,3 +1,4 @@
+import { ARC_LABEL } from "@/lib/arc";
 import { NextRequest, NextResponse } from "next/server";
 import { unauthenticated } from "@/lib/session";
 import { resolveReader } from "@/lib/agentToken";
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
       maxUsd: parsedMax,
       limit: parsedLimit,
     });
-    return NextResponse.json({ network: "Arc Testnet (5042002)", ...found });
+    return NextResponse.json({ network: ARC_LABEL, ...found });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? "The marketplace did not answer", services: [] }, { status: 502 });
   }

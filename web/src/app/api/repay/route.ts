@@ -7,7 +7,7 @@ import { prepareArcRepayment, commitArcRepayment } from "@/lib/repayCore";
 import { getAgentPrivateKey } from "@/lib/agentKeys";
 import { RepayRequest, RepayResponse } from "@/types";
 import { getAgentByAddress, getHumanFacilityStats } from "@/lib/agentStore";
-import { ARC_TESTNET_CHAIN_ID, ARC_TESTNET_NAME, LIFELINE_CREDIT_FACILITY_ADDRESS } from "@/lib/arc";
+import { ARC_CHAIN_ID, ARC_NAME, LIFELINE_CREDIT_FACILITY_ADDRESS } from "@/lib/arc";
 import { verifyArcRepayment } from "@/lib/facilityContract";
 import { claimReceipt, releaseReceipt } from "@/lib/receiptStore";
 
@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
       result.remainingExcessAmount > 0
         ? `Repaid $${result.amountRepaid.toFixed(
             2
-          )} USDC on Arc Testnet (principal: $${result.principalPaid.toFixed(
+          )} USDC on Arc (principal: $${result.principalPaid.toFixed(
             2
           )}, interest/fee: $${result.interestPaid.toFixed(
             2
@@ -203,7 +203,7 @@ export async function POST(req: NextRequest) {
           )} USDC was NOT deducted and remains in agent wallet.`
         : `Repaid $${result.amountRepaid.toFixed(
             2
-          )} USDC on Arc Testnet (principal: $${result.principalPaid.toFixed(
+          )} USDC on Arc (principal: $${result.principalPaid.toFixed(
             2
           )}, interest/fee: $${result.interestPaid.toFixed(
             2
@@ -215,7 +215,7 @@ export async function POST(req: NextRequest) {
       ...response,
       payingAgentName: payingAgent.name,
       beneficiaryAgentName: updatedBeneficiary?.name || payingAgent.name,
-      network: `${ARC_TESTNET_NAME} (${ARC_TESTNET_CHAIN_ID})`,
+      network: `${ARC_NAME} (${ARC_CHAIN_ID})`,
       facilityContractAddress: LIFELINE_CREDIT_FACILITY_ADDRESS,
       message,
     });

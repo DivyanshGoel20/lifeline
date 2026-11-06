@@ -328,7 +328,7 @@ function describePurchase(url: string, r: { status: number; data: any }, rail: R
 }
 
 /** The network each rail pays on, as x402 names it. */
-const RAIL_NETWORK: Record<Rail, string> = { arc: "eip155:5042002", sui: "sui:" };
+const RAIL_NETWORK: Record<Rail, string> = { arc: process.env.NEXT_PUBLIC_ARC_NETWORK === "mainnet" ? "eip155:5042" : "eip155:5042002", sui: "sui:" };
 
 /** Read an x402 challenge without paying it. */
 async function quote(url: string, method: string = "GET") {
@@ -638,7 +638,7 @@ server.registerTool(
     inputSchema: {
       amountUsd: z.number().positive().optional(),
       fromChain: z
-        .enum(["Ethereum_Sepolia", "Base_Sepolia", "Arbitrum_Sepolia", "Optimism_Sepolia", "Polygon_Amoy_Testnet", "Avalanche_Fuji", "Unichain_Sepolia"])
+        .enum(["Ethereum_Sepolia", "Base_Sepolia", "Arbitrum_Sepolia", "Optimism_Sepolia", "Polygon_Amoy_Testnet", "Avalanche_Fuji", "Unichain_Sepolia", "Ethereum", "Base", "Arbitrum", "Optimism", "Polygon", "Avalanche", "Unichain"])
         .optional()
         .describe("Arc only: repay with USDC the agent holds on this chain, bridged to Arc first"),
       token: z
@@ -681,6 +681,39 @@ server.registerTool(
       );
     }
     return text(r.data.message ?? `Repaid ${usd(amount)}.`);
+  }
+);
+
+server.registerTool(
+  "lifeline_whitechain",
+  {
+    title: "Pay in USDT on Whitechain",
+    description:
+      "Buy from Lifeline's Whitechain merchant, or repay what is owed there. The agent needs no WBT: it signs, and Lifeline's relayer pays the gas. " +
+      "If the agent holds too little USDT, the purchase goes on the human's Whitechain line.",
+    inputSchema: {
+      action: z.enum(["buy", "repay"]),
+      item: z.enum(["signal", "report"]).optional().describe("What to buy: signal ($0.01) or report ($0.20)"),
+      amountUsd: z.number().positive().optional().describe("How much to repay. Defaults to everything owed."),
+    },
+  },
+  async ({ action, item, amountUsd }) => {
+    const g = await ensureConnected();
+    if (!g.ok) return text(g.text);
+    if (g.c.agent.rail === "sui") return fail("A Sui agent has no EVM key, so it cannot pay on Whitechain.");
+    if (action === "buy" && !item) return fail("Say what to buy: item is signal or report.");
+    const r = await api("/api/whitechain", {
+      body: {
+        action,
+        agentAddress: g.c.agent.address,
+        ...(action === "buy" ? { url: `${BASE}/api/whitechain/paid/${item}` } : { amountUsd }),
+      },
+      bearer: g.c.token,
+    });
+    if (!r.data.success) return fail(`Not done: ${r.data.error ?? `status ${r.status}`}`);
+    if (action === "repay") return text(`Repaid ${usd(r.data.repaidUsd)} on Whitechain. Still owed: ${usd(r.data.owedUsd)}. Transaction ${r.data.paymentTx}.`);
+    const paidBy = r.data.fundingSource === "LIFELINE_CREDIT" ? `On credit, owes ${usd(r.data.owedUsd)}` : "Paid by the agent";
+    return text(`${paidBy}. Transaction ${r.data.paymentTx}.\n\n${JSON.stringify(r.data.data, null, 2)}`);
   }
 );
 

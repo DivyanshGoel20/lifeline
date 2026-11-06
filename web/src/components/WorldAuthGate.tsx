@@ -1,5 +1,6 @@
 "use client";
 
+import { ARC_NAME } from "@/lib/arc";
 import { worldBypassed } from "@/lib/worldBypass";
 import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
@@ -63,7 +64,7 @@ const TestSignIn: React.FC<WorldAuthGateProps> = ({ onVerified }) => {
       </header>
       <main className="flex-1 flex flex-col justify-center">
         <div className="max-w-[1180px] w-full mx-auto px-6 sm:px-10 py-12 space-y-5">
-          <div className="lab">Test mode · Arc testnet</div>
+          <div className="lab">Test mode · {ARC_NAME}</div>
           <h1 className="serif text-[44px] leading-none">Credit for machines that spend.</h1>
           <p className="text-[14px] ink-2 max-w-[56ch] leading-relaxed">
             World ID is switched off for testing, so nothing here proves you are human. This browser gets a test

@@ -109,7 +109,7 @@ export function createLoan(params: {
     dueAt,
     borrowTxHash: params.txHash,
     repayTxHashes: [],
-    memo: params.memo || "Lifeline draw on Arc Testnet",
+    memo: params.memo || "Lifeline draw on Arc",
   };
 
   all.unshift(newLoan);

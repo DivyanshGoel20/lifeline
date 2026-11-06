@@ -3,7 +3,7 @@ import { getAgentByAddress } from "@/lib/agentStore";
 import { resolveAgentReader, resolveReader } from "@/lib/agentToken";
 import { unauthenticated } from "@/lib/session";
 import { getLoansByAgent, getLoansByHuman, getAllLoans } from "@/lib/loanStore";
-import { ARC_TESTNET_CHAIN_ID, ARC_TESTNET_NAME } from "@/lib/arc";
+import { ARC_CHAIN_ID, ARC_NAME } from "@/lib/arc";
 
 export async function GET(req: NextRequest) {
   try {
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       activeLoansCount: activeLoans.length,
       totalOutstandingUSDC: totalOutstanding,
       loans,
-      network: `${ARC_TESTNET_NAME} (${ARC_TESTNET_CHAIN_ID})`,
+      network: `${ARC_NAME} (${ARC_CHAIN_ID})`,
       timestamp: Date.now(),
     });
   } catch (error: any) {

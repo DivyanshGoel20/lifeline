@@ -3,6 +3,7 @@ import { createGatewayMiddleware, BatchFacilitatorClient } from "@circle-fin/x40
 import { formatUnits } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { riskCurveSvg, dossierSvg } from "./artifacts";
+import { ARC_FACILITATOR_URL, ARC_X402_NETWORK } from "../web/src/lib/arc";
 import { screenIncoming, verdictLine, DEMO_RISKY_PAYTO, DEMO_FAKE_USDC } from "../web/src/lib/intercepta";
 
 type PaidRequest = express.Request & {
@@ -27,7 +28,7 @@ if (!SELLER_WALLET) {
   process.exit(1);
 }
 const FACILITATOR_URL =
-  process.env.FACILITATOR_URL || "https://gateway-api-testnet.circle.com";
+  ARC_FACILITATOR_URL;
 // Its own variable, not PORT: the Next app already owns 3000, and a shared
 // PORT in .env silently pointed both at the same socket.
 const PORT = process.env.PREMIUM_API_PORT || process.env.PORT || 4402;
@@ -164,7 +165,7 @@ let gatewayKind: Promise<any> | null = null;
 const arcKind = () =>
   (gatewayKind ??= new BatchFacilitatorClient({ url: FACILITATOR_URL })
     .getSupported()
-    .then((s: any) => s.kinds.find((k: any) => k.network === "eip155:5042002" && k.extra?.verifyingContract))
+    .then((s: any) => s.kinds.find((k: any) => k.network === ARC_X402_NETWORK && k.extra?.verifyingContract))
     .catch((err) => {
       gatewayKind = null;
       throw err;
@@ -186,7 +187,7 @@ app.get("/lookalike", async (req, res) => {
     accepts: [
       {
         scheme: "exact",
-        network: "eip155:5042002",
+        network: ARC_X402_NETWORK,
         asset: DEMO_FAKE_USDC,
         amount: "10000",
         payTo: SELLER_WALLET,

@@ -1,3 +1,4 @@
+import { arcTxUrl } from "@/lib/arc";
 import { NextRequest, NextResponse } from "next/server";
 import { fetchCompleteContractTelemetry } from "@/lib/facilityContract";
 import { getAgentsByOwner } from "@/lib/agentStore";
@@ -52,7 +53,7 @@ export async function GET(req: NextRequest) {
       return {
         ...d,
         txHash,
-        txLink: txHash && txHash.startsWith("0x") ? `https://testnet.arcscan.app/tx/${txHash}` : undefined,
+        txLink: txHash && txHash.startsWith("0x") ? arcTxUrl(txHash) : undefined,
       };
     });
 

@@ -12,7 +12,7 @@ import {
 } from "./agentStore";
 import { createLoan } from "./loanStore";
 import { recordPayment, PaymentRecord } from "./paymentStore";
-import { LIFELINE_CREDIT_FACILITY_ADDRESS } from "./arc";
+import { LIFELINE_CREDIT_FACILITY_ADDRESS, arcTxUrl, ARC_GATEWAY_CHAIN, ARC_LABEL, ARC_X402_NETWORK } from "./arc";
 import { addPending } from "./pendingLedger";
 import { flushAgent } from "./ledgerFlush";
 import { getAgentPrivateKey, authorizeAgentSpend } from "./agentKeys";
@@ -105,7 +105,7 @@ export class LifelineSigner {
       process.env.LIFELINE_CREDIT_FACILITY_ADDRESS ||
       LIFELINE_CREDIT_FACILITY_ADDRESS;
 
-    // Default to the Circle Gateway-funded account on Arc Testnet
+    // Default to the Circle Gateway-funded account on Arc
     this.fundingPrivateKey =
       options?.fundingPrivateKey ||
       (process.env.LIFELINE_FUNDING_PRIVATE_KEY as `0x${string}`) ||
@@ -116,7 +116,7 @@ export class LifelineSigner {
     }
 
     this.fundingClient = new GatewayClient({
-      chain: options?.chain || "arcTestnet",
+      chain: options?.chain || ARC_GATEWAY_CHAIN,
       privateKey: this.fundingPrivateKey,
     });
   }
@@ -216,13 +216,13 @@ export class LifelineSigner {
     // Select Arc Testnet batching option (Chain ID 5042002)
     const batchingOption = accepts.find(
       (opt: any) =>
-        opt.network === "eip155:5042002" &&
+        opt.network === ARC_X402_NETWORK &&
         opt.extra?.name === "GatewayWalletBatched"
     );
 
     if (!batchingOption) {
       throw new Error(
-        "No supported Circle Gateway batching option found for Arc Testnet (eip155:5042002)"
+        "No supported Circle Gateway batching option found for " + ARC_LABEL
       );
     }
 
@@ -639,7 +639,7 @@ export class LifelineSigner {
           status: paidResponse.status,
           transactionId: arcTxHash || settleResponse?.transaction,
           arcTxHash: arcTxHash || undefined,
-          arcTxLink: arcTxHash ? `https://testnet.arcscan.app/tx/${arcTxHash}` : undefined,
+          arcTxLink: arcTxHash ? arcTxUrl(arcTxHash) : undefined,
           circleSettlementId: settleResponse?.transaction,
           payer: this.fundingClient.address,
           creditFacilityAddress: this.creditFacilityAddress,

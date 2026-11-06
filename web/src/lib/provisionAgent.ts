@@ -1,6 +1,6 @@
 import { mintAgentToken, type AgentGrant } from "./agentToken";
 import { getHumanFacilityStats, getSuiFacilityStats, addAgentToStore } from "./agentStore";
-import { provisionArcAgentWallet } from "./arc";
+import { provisionArcAgentWallet, ARC_LABEL } from "./arc";
 import { setAgentPrivateKey } from "./agentKeys";
 import { syncAgentToContractOnChain } from "./facilityContract";
 import { suiAddressFor } from "./suiRail";
@@ -69,7 +69,7 @@ export async function provisionAgent(
   if (opts.rail === "arc") {
     try {
       authorizedOnChain = !!(await syncAgentToContractOnChain(wallet.address, human));
-      if (!authorizedOnChain) authorizationError = "Arc Testnet authorization did not complete.";
+      if (!authorizedOnChain) authorizationError = "Arc authorization did not complete.";
     } catch (err: any) {
       authorizedOnChain = false;
       authorizationError = err?.message || String(err);
@@ -91,7 +91,7 @@ export async function provisionAgent(
       ...(opts.rail === "sui" ? { suiAddress: suiAddressFor(wallet.address) } : {}),
       apiKey: wallet.apiKey,
       label: opts.label,
-      network: opts.rail === "arc" ? "Arc Testnet (5042002)" : `Sui ${process.env.SUI_NETWORK ?? ""}`.trim(),
+      network: opts.rail === "arc" ? ARC_LABEL : `Sui ${process.env.SUI_NETWORK ?? ""}`.trim(),
     },
     authorizedOnChain,
     ...(authorizationError ? { authorizationError } : {}),

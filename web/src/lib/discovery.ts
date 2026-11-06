@@ -1,3 +1,4 @@
+import { ARC_X402_NETWORK } from "./arc";
 import { sellerIsPoor, sellerScore } from "./sellerQuality";
 
 /**
@@ -8,7 +9,7 @@ import { sellerIsPoor, sellerScore } from "./sellerQuality";
  * payment there: anything else is shown to nobody, because buying it would fail.
  */
 const DISCOVERY_URL = "https://api.circle.com/v2/x402/discovery/resources";
-export const ARC_NETWORK = "eip155:5042002";
+export const ARC_NETWORK = ARC_X402_NETWORK;
 const GATEWAY_SCHEME_NAME = "GatewayWalletBatched";
 const CACHE_MS = 60_000;
 const USDC_DECIMALS = 1e6;

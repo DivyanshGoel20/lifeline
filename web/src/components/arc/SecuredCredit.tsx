@@ -1,5 +1,6 @@
 "use client";
 
+import { ARC_NAME } from "@/lib/arc";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ZERO_ADDRESS,
@@ -178,7 +179,7 @@ export const SecuredCredit: React.FC<{
     if (!wallet.onArc)
       return (
         <div className="space-y-2">
-          <Note>Your wallet is on another network. Switch it to Arc Testnet.</Note>
+          <Note>Your wallet is on another network. Switch it to {ARC_NAME}.</Note>
           <button className="btn" onClick={() => void wallet.connect()}>
             Switch to Arc
           </button>

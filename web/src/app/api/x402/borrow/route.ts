@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { POST as borrowHandler } from "@/app/api/borrow/route";
-import { LIFELINE_CREDIT_FACILITY_ADDRESS, ARC_TESTNET_CHAIN_ID } from "@/lib/arc";
+import { LIFELINE_CREDIT_FACILITY_ADDRESS, ARC_CHAIN_ID, ARC_NAME } from "@/lib/arc";
 
 /**
  * x402 Borrow API
- * Allows agents to draw down USDC against their authorized credit facility on Arc Testnet.
+ * Allows agents to draw down USDC against their authorized credit facility on Arc.
  */
 export async function POST(req: NextRequest) {
   return borrowHandler(req);
@@ -14,11 +14,11 @@ export async function GET() {
   return NextResponse.json({
     protocol: "x402",
     action: "borrow",
-    network: "Arc Testnet",
-    chainId: ARC_TESTNET_CHAIN_ID,
+    network: ARC_NAME,
+    chainId: ARC_CHAIN_ID,
     facilityAddress: LIFELINE_CREDIT_FACILITY_ADDRESS,
     method: "POST",
-    description: "Draw USDC against the the Lifeline facility on Arc Testnet. Underwritten by verified human World ID.",
+    description: "Draw USDC against the the Lifeline facility on Arc. Underwritten by verified human World ID.",
     requestSchema: {
       agentAddress: "0x... (EVM Agent Wallet Address)",
       amount: "number (USDC to draw, e.g. 5.0)",

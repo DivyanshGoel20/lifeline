@@ -1,7 +1,29 @@
 import { isAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
-export const ARC_TESTNET_CHAIN_ID = 5042002;
+/**
+ * Which Arc this deployment runs on. Set NEXT_PUBLIC_ARC_NETWORK=mainnet to move every
+ * read, write, payment and bridge there at once. Testnet is the default, so nothing
+ * reaches real money by accident. On mainnet there are no fallback addresses: the
+ * contracts must be deployed and named.
+ */
+export const ARC_IS_MAINNET = process.env.NEXT_PUBLIC_ARC_NETWORK === "mainnet";
+
+export const ARC_CHAIN_ID = ARC_IS_MAINNET ? 5042 : 5042002;
+export const ARC_NAME = ARC_IS_MAINNET ? "Arc" : "Arc Testnet";
+export const ARC_LABEL = `${ARC_NAME} (${ARC_CHAIN_ID})`;
+/** x402's name for it. */
+export const ARC_X402_NETWORK = `eip155:${ARC_CHAIN_ID}`;
+/** The public endpoint, for handing to someone else's wallet. */
+export const ARC_PUBLIC_RPC = ARC_IS_MAINNET ? "https://rpc.mainnet.arc.io" : "https://rpc.testnet.arc.network";
+export const ARC_EXPLORER = ARC_IS_MAINNET ? "https://arcscan.app" : "https://testnet.arcscan.app";
+/** Circle Gateway's name for it. */
+export const ARC_GATEWAY_CHAIN = (ARC_IS_MAINNET ? "arc" : "arcTestnet") as "arcTestnet";
+/** Bridge Kit's name for it. */
+export const ARC_BRIDGE_CHAIN = ARC_IS_MAINNET ? "Arc" : "Arc_Testnet";
+export const ARC_FACILITATOR_URL = process.env.FACILITATOR_URL || (ARC_IS_MAINNET ? "https://gateway-api.circle.com" : "https://gateway-api-testnet.circle.com");
+export const arcTxUrl = (hash: string) => `${ARC_EXPLORER}/tx/${hash}`;
+export const arcAddressUrl = (address: string) => `${ARC_EXPLORER}/address/${address}`;
 
 /**
  * One definition, because there were two.
@@ -12,11 +34,10 @@ export const ARC_TESTNET_CHAIN_ID = 5042002;
  * wallet validation silently talked to a dead host while the contract calls
  * worked. Two fallbacks for one chain is a bug waiting for an empty .env.
  */
-export const ARC_RPC_URL = process.env.ARC_RPC_URL || "https://rpc.testnet.arc.network";
-export const ARC_TESTNET_NAME = "Arc Testnet";
+export const ARC_RPC_URL = process.env.ARC_RPC_URL || ARC_PUBLIC_RPC;
 export const LIFELINE_CREDIT_FACILITY_ADDRESS = (process.env.LIFELINE_CREDIT_FACILITY_ADDRESS ||
   process.env.NEXT_PUBLIC_LIFELINE_CREDIT_FACILITY_ADDRESS ||
-  "0xd25Fd339E08aad2534dA99B3A02dEec6EC1A818f") as `0x${string}`;
+  (ARC_IS_MAINNET ? "" : "0xd25Fd339E08aad2534dA99B3A02dEec6EC1A818f")) as `0x${string}`;
 export const ARC_USDC_ADDRESS = (process.env.NEXT_PUBLIC_USDC_ADDRESS ||
   "0x3600000000000000000000000000000000000000") as `0x${string}`;
 
@@ -33,7 +54,7 @@ export async function validateArcAgentWallet(
   if (!trimmed || !isAddress(trimmed)) {
     return {
       valid: false,
-      error: "This address is not a valid/usable Arc Testnet agent wallet.",
+      error: "This address is not a valid/usable Arc agent wallet.",
     };
   }
 

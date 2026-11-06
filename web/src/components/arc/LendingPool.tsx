@@ -1,5 +1,6 @@
 "use client";
 
+import { ARC_NAME } from "@/lib/arc";
 import React, { useState } from "react";
 import { describeError, isDecline, parseAmount, postJson, usd } from "./api";
 import type { Wallet } from "./wallet";
@@ -112,7 +113,7 @@ export const LendingPool: React.FC<{
           </div>
         ) : !wallet.onArc ? (
           <div className="space-y-2">
-            <Note>Your wallet is on another network. Switch it to Arc Testnet.</Note>
+            <Note>Your wallet is on another network. Switch it to {ARC_NAME}.</Note>
             <button className="btn" onClick={() => void wallet.connect()}>
               Switch to Arc
             </button>

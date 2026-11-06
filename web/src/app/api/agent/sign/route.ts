@@ -6,7 +6,7 @@ import {
   hasAgentPrivateKey,
 } from "@/lib/agentKeys";
 import { getPublicClient, arcTestnetChain, LIFELINE_CREDIT_FACILITY_ABI } from "@/lib/facilityContract";
-import { LIFELINE_CREDIT_FACILITY_ADDRESS } from "@/lib/arc";
+import { LIFELINE_CREDIT_FACILITY_ADDRESS, ARC_LABEL } from "@/lib/arc";
 import { resolveSpender } from "@/lib/agentToken";
 import { getHuman, unauthenticated } from "@/lib/session";
 
@@ -96,9 +96,9 @@ export async function POST(req: NextRequest) {
       success: true,
       agentAddress: account.address,
       status: "READY",
-      network: "Arc Testnet (5042002)",
+      network: ARC_LABEL,
       latestBlock: Number(blockNumber),
-      message: "Agent signer is active and ready on Arc Testnet.",
+      message: "Agent signer is active and ready on Arc.",
     });
   } catch (err: any) {
     console.error("[POST /api/agent/sign] Error:", err);

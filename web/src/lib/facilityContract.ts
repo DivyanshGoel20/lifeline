@@ -9,7 +9,7 @@ import {
   formatUnits,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { LIFELINE_CREDIT_FACILITY_ADDRESS, ARC_TESTNET_CHAIN_ID, ARC_RPC_URL } from "./arc";
+import { LIFELINE_CREDIT_FACILITY_ADDRESS, ARC_CHAIN_ID, ARC_RPC_URL, arcAddressUrl, ARC_NAME } from "./arc";
 import { getAgentPrivateKey, authorizeAgentSpend } from "./agentKeys";
 import { depositToAgentGateway } from "./disburse";
 import { refHash } from "./paymentRef";
@@ -18,8 +18,8 @@ import { collateralCreditUsd } from "./collateralStore";
 import { CREDIT_TIERS } from "./reputationEngine";
 
 export const arcTestnetChain = defineChain({
-  id: ARC_TESTNET_CHAIN_ID,
-  name: "Arc Testnet",
+  id: ARC_CHAIN_ID,
+  name: ARC_NAME,
   nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
   rpcUrls: {
     default: {
@@ -371,7 +371,7 @@ export function computeProfileId(humanOwnerOrRoot: string): `0x${string}` {
 }
 
 /**
- * Reads credit profile directly from LifelineCreditFacility contract on Arc Testnet.
+ * Reads credit profile directly from LifelineCreditFacility contract on Arc.
  */
 export async function getOnChainProfile(profileIdOrHuman: string) {
   const client = getPublicClient();
@@ -421,7 +421,7 @@ export async function getOnChainRemainingCredit(profileIdOrHuman: string): Promi
 }
 
 /**
- * Submits a real on-chain recordDrawdown transaction on Arc Testnet to LifelineCreditFacility.
+ * Submits a real on-chain recordDrawdown transaction on Arc to LifelineCreditFacility.
  */
 export async function executeOnChainDrawdown(params: {
   agentAddress: string;
@@ -475,7 +475,7 @@ export async function executeOnChainDrawdown(params: {
     );
   }
 
-  // 2. Ensure Agent is authorized for this profile on Arc Testnet
+  // 2. Ensure Agent is authorized for this profile on Arc
   const isAuth = await publicClient
     .readContract({
       address: LIFELINE_CREDIT_FACILITY_ADDRESS,
@@ -494,7 +494,7 @@ export async function executeOnChainDrawdown(params: {
     );
   }
 
-  // 3. Record Drawdown on Arc Testnet
+  // 3. Record Drawdown on Arc
   const txHash = await walletClient.writeContract({
     address: LIFELINE_CREDIT_FACILITY_ADDRESS,
     abi: LIFELINE_CREDIT_FACILITY_ABI,
@@ -559,7 +559,7 @@ export async function executeOnChainDrawdown(params: {
 }
 
 /**
- * Submits a real on-chain repayment on Arc Testnet.
+ * Submits a real on-chain repayment on Arc.
  * If the paying agent is an autonomous agent with a private key, this function
  * executes an actual on-chain native USDC transfer from the agent wallet to the Lifeline facility,
  * and then records the repayment on the LifelineCreditFacility contract.
@@ -582,7 +582,7 @@ export async function executeOnChainRepayment(params: {
    */
   fundedOffChain?: string;
 }): Promise<{ txHash: `0x${string}`; transferTxHash?: string; blockNumber: number }> {
-  // 1. If payer is an autonomous agent with a stored private key, transfer real USDC on Arc Testnet
+  // 1. If payer is an autonomous agent with a stored private key, transfer real USDC on Arc
   let transferTxHash: string | undefined = params.alreadyTransferred;
   const agentKey =
     params.alreadyTransferred || params.fundedOffChain ? null : getAgentPrivateKey(params.payerAddress);
@@ -616,7 +616,7 @@ export async function executeOnChainRepayment(params: {
       // ways of repaying land in one place.
       const facilityRecipient = ARC_TREASURY;
 
-      console.log(`[Repayment] Executing real on-chain transfer of ${params.amountUsdc} USDC from agent ${agentAccount.address} to facility ${facilityRecipient} on Arc Testnet...`);
+      console.log(`[Repayment] Executing real on-chain transfer of ${params.amountUsdc} USDC from agent ${agentAccount.address} to facility ${facilityRecipient} on Arc...`);
 
       // On Arc Testnet (5042002), native currency is USDC (18 decimals)
       const transferHash = await agentWalletClient.sendTransaction({
@@ -624,17 +624,17 @@ export async function executeOnChainRepayment(params: {
         value: parseUnits(params.amountUsdc.toFixed(6), 18),
       });
 
-      console.log(`[Repayment] Token transfer submitted on Arc Testnet: ${transferHash}`);
+      console.log(`[Repayment] Token transfer submitted on Arc: ${transferHash}`);
       await publicClient.waitForTransactionReceipt({ hash: transferHash });
-      console.log(`[Repayment] Token transfer confirmed on Arc Testnet: ${transferHash}`);
+      console.log(`[Repayment] Token transfer confirmed on Arc: ${transferHash}`);
       transferTxHash = transferHash;
     } catch (transferErr: any) {
       console.warn(`[Repayment] Autonomous wallet transfer notice:`, transferErr.message || transferErr);
-      throw new Error(`Failed to transfer USDC from agent wallet on Arc Testnet: ${transferErr.shortMessage || transferErr.message}`);
+      throw new Error(`Failed to transfer USDC from agent wallet on Arc: ${transferErr.shortMessage || transferErr.message}`);
     }
   }
 
-  // 2. Submit contract recordRepayment on Arc Testnet
+  // 2. Submit contract recordRepayment on Arc
   const pk = (process.env.PRIVATE_KEY || process.env.LIFELINE_FUNDING_PRIVATE_KEY) as `0x${string}`;
   if (!pk) throw new Error("Missing PRIVATE_KEY for on-chain Arc Testnet transaction");
 
@@ -689,7 +689,7 @@ export async function executeOnChainRepayment(params: {
 }
 
 /**
- * Updates a credit profile limit on-chain on Arc Testnet upon tier graduation.
+ * Updates a credit profile limit on-chain on Arc upon tier graduation.
  */
 export async function updateOnChainCreditLimit(
   humanOwner: string,
@@ -729,7 +729,7 @@ export async function updateOnChainCreditLimit(
 }
 
 /**
- * Ensures an agent is authorized on the LifelineCreditFacility contract on Arc Testnet.
+ * Ensures an agent is authorized on the LifelineCreditFacility contract on Arc.
  */
 export async function syncAgentToContractOnChain(
   agentAddress: string,
@@ -785,7 +785,7 @@ export async function syncAgentToContractOnChain(
 }
 
 /**
- * Ensures an on-chain credit profile exists for a World ID human operator on Arc Testnet.
+ * Ensures an on-chain credit profile exists for a World ID human operator on Arc.
  * If the profile does not exist yet, initializes it with the first tier's USDC credit limit.
  */
 export async function ensureHumanProfileOnChain(
@@ -814,7 +814,7 @@ export async function ensureHumanProfileOnChain(
       .catch(() => null)) as any;
 
     if (!existing || Number(existing.createdAt) === 0) {
-      console.log(`[OnChainProfile] Provisioning starter on-chain profile on Arc Testnet for World ID operator ${humanOwner}...`);
+      console.log(`[OnChainProfile] Provisioning starter on-chain profile on Arc for World ID operator ${humanOwner}...`);
       const humanRoot = computeProfileId(humanOwner);
       const createTx = await walletClient.writeContract({
         address: LIFELINE_CREDIT_FACILITY_ADDRESS,
@@ -823,7 +823,7 @@ export async function ensureHumanProfileOnChain(
         args: [profileId, account.address, humanRoot, parseUnits(String(CREDIT_TIERS[0].creditLimit), 6)],
       });
       await publicClient.waitForTransactionReceipt({ hash: createTx });
-      console.log(`[OnChainProfile] Provisioned profile ${profileId} on Arc Testnet in tx ${createTx}`);
+      console.log(`[OnChainProfile] Provisioned profile ${profileId} on Arc in tx ${createTx}`);
       return { txHash: createTx, profileId };
     }
 
@@ -838,7 +838,7 @@ export async function ensureHumanProfileOnChain(
 }
 
 /**
- * Fetches complete real-time telemetry directly from the LifelineCreditFacility contract on Arc Testnet.
+ * Fetches complete real-time telemetry directly from the LifelineCreditFacility contract on Arc.
  */
 /**
  * Ledger rows, read once.
@@ -980,7 +980,7 @@ export async function fetchCompleteContractTelemetry(
             profileId: authRecord ? authRecord[0] : profileId,
             authorizedAtTimestamp: authTime,
             authorizedAtIso:
-              authTime > 0 ? new Date(authTime * 1000).toISOString() : "Active on Arc Testnet",
+              authTime > 0 ? new Date(authTime * 1000).toISOString() : "Active on Arc",
           };
         } catch {
           return null;
@@ -1033,7 +1033,7 @@ export async function fetchCompleteContractTelemetry(
         referenceHash: d[7] || "",
         // Readable reference lives on the loan record, matched by the UI.
         paymentReference: "",
-        arcscanUrl: `https://testnet.arcscan.app/address/${d[2]}`,
+        arcscanUrl: arcAddressUrl(d[2]),
       });
     } catch {
       // ignore
@@ -1083,14 +1083,14 @@ export async function fetchCompleteContractTelemetry(
   return {
     network: {
       name: "Arc Testnet",
-      chainId: ARC_TESTNET_CHAIN_ID,
+      chainId: ARC_CHAIN_ID,
       rpcUrl: ARC_RPC_URL,
       latestBlock: Number(latestBlock),
     },
     contract: {
       address: LIFELINE_CREDIT_FACILITY_ADDRESS,
       owner,
-      explorerUrl: `https://testnet.arcscan.app/address/${LIFELINE_CREDIT_FACILITY_ADDRESS}`,
+      explorerUrl: arcAddressUrl(LIFELINE_CREDIT_FACILITY_ADDRESS),
     },
     profile: profileData && Number(profileData.createdAt) > 0
       ? {

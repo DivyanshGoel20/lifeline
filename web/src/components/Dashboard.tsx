@@ -1,5 +1,6 @@
 "use client";
 
+import { ARC_CHAIN_ID, ARC_NAME } from "@/lib/arc";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WorldAuthGate } from "@/components/WorldAuthGate";
@@ -139,7 +140,7 @@ export function Dashboard({ rail }: { rail: Rail }) {
       <footer className="rule-t">
         <div className="max-w-[1180px] mx-auto px-6 sm:px-10 py-5 flex flex-wrap justify-between gap-2 lab">
           <span>Lifeline · credit for machines that spend · <a href="/whitechain" className="underline">USDT on Whitechain</a></span>
-          <span>{L.rail === "arc" ? "Arc testnet · 5042002" : `Sui ${L.sui.network ?? ""}`}</span>
+          <span>{L.rail === "arc" ? `${ARC_NAME} · ${ARC_CHAIN_ID}` : `Sui ${L.sui.network ?? ""}`}</span>
         </div>
       </footer>
 

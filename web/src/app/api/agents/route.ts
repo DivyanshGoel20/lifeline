@@ -3,7 +3,7 @@ import { getHuman, unauthenticated } from "@/lib/session";
 import { getAgentWalletUsdc } from "@/lib/walletBalance";
 import { Agent } from "@/types";
 import { getAllAgents, addAgentToStore, getAgentByAddress, getAgentsByOwner, removeAgentFromStore, agentRail, getHumanFacilityStats } from "@/lib/agentStore";
-import { validateArcAgentWallet } from "@/lib/arc";
+import { validateArcAgentWallet, ARC_LABEL } from "@/lib/arc";
 import { LifelineSigner } from "@/lib/lifelineSigner";
 import { syncAgentToContractOnChain } from "@/lib/facilityContract";
 import { hasAgentPrivateKey } from "@/lib/agentKeys";
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
       // A wallet registered by address is an Arc agent; Sui agents are
       // provisioned, so Lifeline holds the key that signs on Sui.
       rail: "arc",
-      network: "Arc Testnet (5042002)",
+      network: ARC_LABEL,
       // The cap asked for, held to the Arc line's headroom.
       creditLimit: Math.min(
         Math.max(Number.isFinite(Number(capUsd)) ? Number(capUsd) : 10, 0),
@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
       const synced = await syncAgentToContractOnChain(newAgent.address, newAgent.humanOwner);
       if (!synced) {
         authorizedOnChain = false;
-        authorizationError = "Arc Testnet authorization did not complete.";
+        authorizationError = "Arc authorization did not complete.";
       }
     } catch (contractErr: any) {
       authorizedOnChain = false;
@@ -177,8 +177,8 @@ export async function POST(req: NextRequest) {
       authorizedOnChain,
       ...(authorizationError ? { authorizationError } : {}),
       message: authorizedOnChain
-        ? `Agent ${saved.name} verified on Arc Testnet and authorized against your credit facility.`
-        : `Agent ${saved.name} registered, but it is not yet authorized on Arc Testnet and cannot draw credit.`,
+        ? `Agent ${saved.name} verified on Arc and authorized against your credit facility.`
+        : `Agent ${saved.name} registered, but it is not yet authorized on Arc and cannot draw credit.`,
     });
   } catch (error: any) {
     console.error("[Agents-API] Error:", error);

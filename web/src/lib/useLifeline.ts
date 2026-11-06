@@ -1,5 +1,6 @@
 "use client";
 
+import { arcTxUrl } from "./arc";
 import { useCallback, useRef, useEffect, useMemo, useState } from "react";
 import type { Rail, Agent, ActivityItem } from "@/types";
 import type { LeadData } from "@/components/Monitor";
@@ -33,7 +34,7 @@ export type Payment = {
 
 type Obligation = { obligationId: string; agentAddress: string; status: string; dueMs: number | null };
 
-const ARC_TX = (hash?: string) => (hash && /^0x[0-9a-f]{64}$/i.test(hash) ? `https://testnet.arcscan.app/tx/${hash}` : null);
+const ARC_TX = (hash?: string) => (hash && /^0x[0-9a-f]{64}$/i.test(hash) ? arcTxUrl(hash) : null);
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 
 export function useLifeline(

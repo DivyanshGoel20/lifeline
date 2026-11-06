@@ -1,3 +1,4 @@
+import { ARC_FACILITATOR_URL, ARC_X402_NETWORK } from "./arc";
 import { NextRequest, NextResponse } from "next/server";
 import { BatchFacilitatorClient } from "@circle-fin/x402-batching/server";
 import { privateKeyToAccount } from "viem/accounts";
@@ -15,7 +16,7 @@ import { screenIncoming, verdictLine } from "./intercepta";
  * handler runs.
  */
 
-const ARC_NETWORK = "eip155:5042002";
+const ARC_NETWORK = ARC_X402_NETWORK;
 const SCHEME = "exact";
 const BATCHING_NAME = "GatewayWalletBatched";
 const BATCHING_VERSION = "1";
@@ -36,7 +37,7 @@ let arcKind: Promise<any> | null = null;
 
 function client(): BatchFacilitatorClient {
   facilitator ??= new BatchFacilitatorClient({
-    url: process.env.FACILITATOR_URL || "https://gateway-api-testnet.circle.com",
+    url: ARC_FACILITATOR_URL,
   });
   return facilitator;
 }
@@ -47,7 +48,7 @@ async function arcSupport(): Promise<any> {
     .getSupported()
     .then((s: any) => {
       const kind = s.kinds.find((k: any) => k.network === ARC_NETWORK && k.extra?.verifyingContract);
-      if (!kind) throw new Error("Circle Gateway does not list Arc testnet");
+      if (!kind) throw new Error("Circle Gateway does not list this Arc network");
       return kind;
     })
     .catch((err) => {
@@ -64,7 +65,7 @@ async function requirements(priceUsd: number, payToOverride?: string, assetOverr
   if (!payTo) throw new Error("No seller wallet: set SELLER_WALLET_ADDRESS (or SELLER_PRIVATE_KEY) in .env");
   const kind = await arcSupport();
   const usdc = kind.extra?.assets?.find((a: any) => a.symbol === "USDC")?.address;
-  if (!usdc) throw new Error("Circle Gateway lists no USDC on Arc testnet");
+  if (!usdc) throw new Error("Circle Gateway lists no USDC on this Arc network");
   return {
     scheme: SCHEME,
     network: ARC_NETWORK,
