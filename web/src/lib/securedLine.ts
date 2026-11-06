@@ -21,6 +21,8 @@ export const VAULT_ABI = parseAbi([
   "function cancelWithdrawal(bytes32 profileId)",
   "function withdraw(bytes32 profileId, address to) returns (uint256)",
   "function seize(bytes32 profileId) returns (uint256)",
+  "function latchDefault(bytes32 profileId)",
+  "function defaultLatched(bytes32 profileId) view returns (bool)",
   "function assetsOf(bytes32 profileId) view returns (uint256)",
   "function creditableOf(bytes32 profileId) view returns (uint256)",
   "function ltvBps() view returns (uint256)",
@@ -96,11 +98,19 @@ const onChain: VaultChain = {
     const client = getPublicClient();
     const before = (await client.readContract({ address, abi: VAULT_ABI, functionName: "assetsOf", args: [profileId] })) as bigint;
     if (before === 0n) return { txHash: "", takenUsd: 0 };
-    const hash = await createWalletClient({
+    const wallet = createWalletClient({
       account: privateKeyToAccount(operatorKey()),
       chain: arcTestnetChain,
       transport: getArcTransport(),
-    }).writeContract({ address, abi: VAULT_ABI, functionName: "seize", args: [profileId] });
+    });
+    // The facility lets a profile's owner suspend it, which overwrites Defaulted.
+    // The latch keeps the default on record in the vault, so that cannot block this.
+    const latched = await client.readContract({ address, abi: VAULT_ABI, functionName: "defaultLatched", args: [profileId] });
+    if (!latched) {
+      const latch = await wallet.writeContract({ address, abi: VAULT_ABI, functionName: "latchDefault", args: [profileId] });
+      await client.waitForTransactionReceipt({ hash: latch });
+    }
+    const hash = await wallet.writeContract({ address, abi: VAULT_ABI, functionName: "seize", args: [profileId] });
     const receipt = await client.waitForTransactionReceipt({ hash });
     if (receipt.status !== "success") throw new Error(`seize reverted (${hash})`);
     const after = (await client.readContract({ address, abi: VAULT_ABI, functionName: "assetsOf", args: [profileId] })) as bigint;
