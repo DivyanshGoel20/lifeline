@@ -331,8 +331,8 @@ function describePurchase(url: string, r: { status: number; data: any }, rail: R
 const RAIL_NETWORK: Record<Rail, string> = { arc: "eip155:5042002", sui: "sui:" };
 
 /** Read an x402 challenge without paying it. */
-async function quote(url: string) {
-  const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+async function quote(url: string, method: string = "GET") {
+  const res = await fetch(url, { method, signal: AbortSignal.timeout(20_000) });
   if (res.status !== 402) {
     return { free: true as const, status: res.status };
   }
@@ -368,7 +368,7 @@ const server = new McpServer(
     instructions:
       "Lifeline gives this agent a credit line from its World ID-verified human, for paying x402 resources. " +
       "Start with lifeline_status. If the agent is not connected, it returns a link: show it to the user and ask them to approve - " +
-      "never try to work around it. Then lifeline_catalogue to see what is for sale, lifeline_quote to see a price, and lifeline_buy to pay. " +
+      "never try to work around it. Then lifeline_discover to find real services (lifeline_catalogue for the demo sellers), lifeline_quote to see a price, and lifeline_buy to pay. " +
       "Payments go through Intercepta screening; a HELD result needs the human's approval via lifeline_request_approval.",
   }
 );
@@ -461,6 +461,49 @@ server.registerTool(
 );
 
 server.registerTool(
+  "lifeline_discover",
+  {
+    title: "Find real services to buy",
+    description:
+      "Search Circle's agent marketplace for x402 services Lifeline can pay on Arc, best first: sellers with a poor delivery record come last, and Lifeline will not lend to buy from them.",
+    inputSchema: {
+      query: z.string().max(200).optional().describe("What you need, in plain words"),
+      category: z.string().max(40).optional().describe("For example WEB_SEARCH_RESEARCH or FINANCIAL_ANALYSIS"),
+      maxUsd: z.number().positive().optional().describe("Most you would pay per call"),
+      limit: z.number().int().positive().max(50).optional(),
+    },
+  },
+  async ({ query, category, maxUsd, limit }) => {
+    const g = await ensureConnected();
+    if (!g.ok) return text(g.text);
+    if (g.c.agent.rail !== "arc") return text("The marketplace is paid through Arc. This agent is on Sui; use lifeline_catalogue.");
+    const q = new URLSearchParams();
+    if (query) q.set("query", query);
+    if (category) q.set("category", category);
+    if (maxUsd !== undefined) q.set("maxUsd", String(maxUsd));
+    q.set("limit", String(limit ?? 10));
+    const r = await api(`/api/x402/discover?${q}`, { bearer: g.c.token });
+    const lost = lostAccess(r);
+    if (lost) return fail(lost);
+    if (r.status !== 200) return fail(r.data.error ?? `status ${r.status}`);
+    const items: any[] = r.data.services ?? [];
+    if (!items.length) return text("Nothing in the marketplace matches that on Arc right now.");
+    return text(
+      [
+        `${r.data.total} on Arc; best ${items.length}:`,
+        ...items.map((s) => {
+          const record = s.quality.samples ? `delivered ~${Math.round(s.quality.score * 100)}% of ${s.quality.samples}` : "no record yet";
+          const flags = [s.needsSignIn ? "wants sign-in" : "", s.quality.poor ? "POOR RECORD, no credit" : ""].filter(Boolean).join(", ");
+          return `  ${usd(s.priceUsd, 4).padEnd(9)} ${s.provider} · ${record}${flags ? ` · ${flags}` : ""}\n            ${s.method} ${s.url}\n            ${String(s.description).slice(0, 120)}`;
+        }),
+        "",
+        "lifeline_buy pays; pass method and body for a POST service.",
+      ].join("\n")
+    );
+  }
+);
+
+server.registerTool(
   "lifeline_quote",
   {
     title: "Quote an x402 resource",
@@ -504,14 +547,16 @@ server.registerTool(
     inputSchema: {
       url: z.string().url(),
       maxUsd: z.number().positive().optional().describe("Refuse if the quoted price is higher than this"),
+      method: z.enum(["GET", "POST"]).optional().describe("How the service wants to be called. lifeline_discover says which"),
+      body: z.unknown().optional().describe("Request body for a POST service"),
     },
   },
-  async ({ url, maxUsd }) => {
+  async ({ url, maxUsd, method, body }) => {
     const g = await ensureConnected();
     if (!g.ok) return text(g.text);
     if (maxUsd !== undefined) {
       try {
-        const q = await quote(url);
+        const q = await quote(url, method);
         const price = q.free ? 0 : Math.min(...q.options.map((o) => o.amountUsd));
         if (price > maxUsd) return fail(`Not bought: it costs ${usd(price)}, over your limit of ${usd(maxUsd)}.`);
       } catch (err: any) {
@@ -520,7 +565,7 @@ server.registerTool(
     }
     const rail = g.c.agent.rail;
     const r = await api(rail === "arc" ? "/api/pay" : "/api/sui/pay", {
-      body: { url, agentAddress: g.c.agent.address },
+      body: { url, agentAddress: g.c.agent.address, method, body },
       bearer: g.c.token,
     });
     const lost = lostAccess(r);
