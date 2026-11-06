@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getHuman, unauthenticated } from "@/lib/session";
 import { linkWallet } from "@/lib/walletLinks";
 import { readToken } from "@/lib/signedToken";
+import { recordAuthFailure } from "@/lib/authReports";
 
 /**
  * Bind the wallet that just signed in to the human World ID just proved.
@@ -18,7 +19,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: "Sign in with your World App wallet first." }, { status: 400 });
   }
   const linked = linkWallet(claim.w, human);
-  if (!linked.ok) return NextResponse.json({ success: false, error: linked.reason }, { status: 409 });
+  if (!linked.ok) {
+    recordAuthFailure({ step: "server:wallet-link", detail: linked.reason });
+    return NextResponse.json({ success: false, error: linked.reason }, { status: 409 });
+  }
 
   const res = NextResponse.json({ success: true, wallet: claim.w });
   res.cookies.set("lifeline_wallet", "", { path: "/", maxAge: 0 });

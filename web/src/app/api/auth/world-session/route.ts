@@ -3,6 +3,7 @@ import { verifyWorldSelfieProof } from "@/lib/world";
 import { attachSession, getHuman, rememberedAccount } from "@/lib/session";
 import { bindSession, humanForSession, sessionForHuman, spendNullifier } from "@/lib/worldSessions";
 import { readToken } from "@/lib/signedToken";
+import { recordAuthFailure } from "@/lib/authReports";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
 
   const verification = await verifyWorldSelfieProof(result, undefined, { allowSession: true });
   if (!verification.success) {
+    recordAuthFailure({ step: "server:world-session", code: verification.code, detail: verification.error });
     return NextResponse.json({ verified: false, error: verification.error, code: verification.code }, { status: 400 });
   }
 

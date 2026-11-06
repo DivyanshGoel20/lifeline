@@ -4,6 +4,7 @@ import type { MiniAppWalletAuthSuccessPayload } from "@worldcoin/minikit-js/comm
 import { attachSession } from "@/lib/session";
 import { humanForWallet } from "@/lib/walletLinks";
 import { mintToken } from "@/lib/signedToken";
+import { recordAuthFailure } from "@/lib/authReports";
 
 const WALLET_COOKIE = "lifeline_wallet";
 
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
     if (!isValid || !siweMessageData.address) throw new Error("Signature did not verify");
     wallet = siweMessageData.address;
   } catch (err: any) {
+    recordAuthFailure({ step: "server:wallet", detail: err?.message });
     return NextResponse.json({ verified: false, error: err?.message ?? "Wallet sign-in failed" }, { status: 400 });
   }
 

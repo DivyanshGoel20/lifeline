@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyWorldSelfieProof } from "@/lib/world";
 import { ensureHumanProfileOnChain } from "@/lib/facilityContract";
 import { attachSession } from "@/lib/session";
+import { recordAuthFailure } from "@/lib/authReports";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,6 +12,7 @@ export async function POST(req: NextRequest) {
     const verification = await verifyWorldSelfieProof(proofPayload, body.signal);
 
     if (!verification.success) {
+      recordAuthFailure({ step: "server:world-verify", code: verification.code, detail: verification.error });
       return NextResponse.json(
         { verified: false, error: verification.error, code: verification.code },
         { status: 400 }

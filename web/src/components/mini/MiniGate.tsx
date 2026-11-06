@@ -41,6 +41,7 @@ export const MiniGate: React.FC<{ onSignedIn: (human: string) => void; haptic: (
   const [rpContext, setRpContext] = useState<RpContext | null>(null);
   const [error, setError] = useState<string | null>(null);
   const human = useRef("");
+  const serverFailure = useRef<{ code?: string; message: string } | null>(null);
 
   const appId = (process.env.NEXT_PUBLIC_WORLD_APP_ID || "app_6ad9b6ef952f1c2a9a70a58e05aa9878") as `app_${string}`;
   const action = process.env.NEXT_PUBLIC_WORLD_ACTION || "lifeline-human-verify";
@@ -50,7 +51,17 @@ export const MiniGate: React.FC<{ onSignedIn: (human: string) => void; haptic: (
     setLink(new URLSearchParams(window.location.search).get("link"));
   }, []);
 
+  // World App has no console, so the reason is sent to the server as well as shown.
+  const report = (where: string, code: string | undefined, detail: string) => {
+    fetch("/api/auth/report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ step: `mini:${where}`, code, detail }),
+    }).catch(() => {});
+  };
+
   const fail = (message: string) => {
+    report(step, undefined, message);
     setError(message);
     setStep("start");
     haptic("error");
@@ -113,7 +124,11 @@ export const MiniGate: React.FC<{ onSignedIn: (human: string) => void; haptic: (
       body: JSON.stringify({ idkitResponse: result, result }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.verified) throw new Error(data.error || "World ID verification failed.");
+    if (!res.ok || !data.verified) {
+      // IDKit reports any failure here only as failed_by_host_app, so keep the real reason.
+      serverFailure.current = { code: data.code, message: data.error || "World ID verification failed." };
+      throw new Error(serverFailure.current.message);
+    }
 
     await linkWallet();
     human.current = String(data.nullifierHash);
@@ -122,14 +137,24 @@ export const MiniGate: React.FC<{ onSignedIn: (human: string) => void; haptic: (
   const linkWallet = async () => {
     const res = await fetch("/api/auth/wallet/link", { method: "POST" });
     const linked = await res.json().catch(() => ({}));
-    if (!res.ok || !linked.success) throw new Error(linked.error || "Could not link your wallet.");
+    if (!res.ok || !linked.success) {
+      serverFailure.current = { code: "wallet_link_failed", message: linked.error || "Could not link your wallet." };
+      throw new Error(serverFailure.current.message);
+    }
   };
 
-  const proofError = (code: IDKitErrorCodes) => {
+  const proofError = (idkitCode: IDKitErrorCodes) => {
+    const server = serverFailure.current;
+    serverFailure.current = null;
+    const code = server?.code || String(idkitCode);
+    report("proof", code, server?.message ?? `IDKit: ${String(idkitCode)}`);
     setStep("start");
     haptic("error");
+    if (server && code !== "nullifier_replayed" && code !== "max_verifications_reached") {
+      return setError(`${server.message} (${code})`);
+    }
     setError(
-      String(code) === "nullifier_replayed" || String(code) === "max_verifications_reached"
+      code === "nullifier_replayed" || code === "max_verifications_reached"
         ? "You have already joined Lifeline, in a browser - World ID proves that only once. On the dashboard there, choose \"Open in World App\" and this wallet is added to your account."
         : `World ID did not complete (${code}).`
     );
