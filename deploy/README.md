@@ -1,4 +1,30 @@
-# Deploying Lifeline on Railway
+# Deploying Lifeline
+
+**Now on Vercel.** The Railway setup below is kept for reference; the Railway services no
+longer answer.
+
+| project | URL | root |
+|---|---|---|
+| lifeline-arc | https://lifeline-arc.vercel.app | `web` |
+| lifeline-premium | https://lifeline-premium.vercel.app | `premium-api` |
+| lifeline-feed | https://lifeline-feed.vercel.app | `sui` |
+
+Vercel has no lasting disk, so the app's ledgers live in Upstash Redis (`web/src/lib/storeFs.ts`).
+With no Redis configured they are plain files, as they are locally. Limits of this setup:
+
+- It is not a database. Two instances can lose an update to the same file, and the ledger lock
+  is per process. Fine for a testnet deployment in light use.
+- The hourly sweep is daily on Vercel's Hobby plan.
+- The Sui seller's record of settled payments lasts only as long as its instance.
+
+Deploying from the repo root (`.vercelignore` keeps `.env` out of the upload):
+
+```bash
+node scripts/bundle-sellers.mjs     # the two sellers are bundled first
+VERCEL_ORG_ID=<team> VERCEL_PROJECT_ID=<project> vercel deploy --prod --yes
+```
+
+# On Railway (previous setup)
 
 Three services from this one repo. Each has a config here (`*.railway.json`):
 point a Railway service at the repo, set its config path, and the build and
@@ -15,9 +41,9 @@ start commands come from there.
 
 | service | URL |
 |---|---|
-| web | https://web-production-2ccec.up.railway.app |
-| premium | https://premium-production-6e83.up.railway.app |
-| feed | https://feed-production-bd25.up.railway.app |
+| web | https://lifeline-arc.vercel.app |
+| premium | https://lifeline-premium.vercel.app |
+| feed | https://lifeline-feed.vercel.app |
 
 ## Build commands
 

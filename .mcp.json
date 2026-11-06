@@ -7,7 +7,7 @@
         "mcp/server.ts"
       ],
       "env": {
-        "LIFELINE_URL": "https://web-production-2ccec.up.railway.app",
+        "LIFELINE_URL": "https://lifeline-arc.vercel.app",
         "LIFELINE_AGENT_NAME": "claude-code"
       }
     }

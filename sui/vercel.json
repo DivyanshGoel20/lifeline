@@ -1,4 +1,4 @@
 {
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
-  "functions": { "api/index.ts": { "includeFiles": "{deployments/**,lifeline/Move.toml}" } }
+  "functions": { "api/index.mjs": { "maxDuration": 60, "includeFiles": "{deployments/**,lifeline/Move.toml}" } }
 }

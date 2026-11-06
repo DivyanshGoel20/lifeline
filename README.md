@@ -13,7 +13,7 @@ cap, waits for the human to approve it with World ID. Humans who do not repay
 are suspended, then defaulted, on chain - and other World apps can ask
 Lifeline whether someone repays.
 
-**Live:** [web-production-2ccec.up.railway.app](https://web-production-2ccec.up.railway.app)
+**Live:** [lifeline-arc.vercel.app](https://lifeline-arc.vercel.app)
 · also a World mini app, and a Claude Code MCP server.
 
 **At ETHGlobal Mumbai (Continuity track):** real marketplace services, deposit-backed
@@ -238,4 +238,4 @@ npm run e2e:mcp               # Claude Code tools end to end
 | Sui testnet package | [`0x14e7136b…`](https://suiscan.xyz/testnet/object/0x14e7136be665fbf7b839cde7fbb7ef2d3d46fafe35aac957aa01dbc707188e91) |
 | Sui `Facility<USDC>` | [`0x24d4736a…`](https://suiscan.xyz/testnet/object/0x24d4736a368e7c1e3ef1acddaa9560252e0c0ea5a08e90ab8c45bcf9481bb73e) |
 | On-chain collection by a stranger / a recorded default | [`8221agWL…`](https://suiscan.xyz/testnet/tx/8221agWL1vqYysTnWXLUqdHpbYAmRcChpprq5LyZtrL4) / [`Gy9Apwq5…`](https://suiscan.xyz/testnet/tx/Gy9Apwq5Qf7s9giAGNfirnoHTpGFo9VoWZR5owhAwgMt) |
-| App / Arc seller / Sui seller | [web](https://web-production-2ccec.up.railway.app) · [premium](https://premium-production-6e83.up.railway.app) · [feed](https://feed-production-bd25.up.railway.app) |
+| App / Arc seller / Sui seller | [web](https://lifeline-arc.vercel.app) · [premium](https://lifeline-premium.vercel.app) · [feed](https://lifeline-feed.vercel.app) |
