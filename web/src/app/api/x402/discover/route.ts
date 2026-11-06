@@ -14,8 +14,10 @@ export async function GET(req: NextRequest) {
   if (!resolveReader(req)) return unauthenticated();
 
   const p = new URL(req.url).searchParams;
-  const maxUsd = p.get("maxUsd");
-  const limit = p.get("limit");
+  // An empty filter is no filter.
+  const param = (name: string) => p.get(name) || null;
+  const maxUsd = param("maxUsd");
+  const limit = param("limit");
   const parsedMax = maxUsd === null ? undefined : Number(maxUsd);
   const parsedLimit = limit === null ? undefined : Number(limit);
   if ((parsedMax !== undefined && !(parsedMax >= 0)) || (parsedLimit !== undefined && !(parsedLimit > 0))) {
@@ -24,8 +26,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const found = await discoverServices({
-      query: p.get("query") ?? undefined,
-      category: p.get("category") ?? undefined,
+      query: param("query") ?? undefined,
+      category: param("category") ?? undefined,
       maxUsd: parsedMax,
       limit: parsedLimit,
     });
