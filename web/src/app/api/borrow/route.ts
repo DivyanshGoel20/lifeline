@@ -1,3 +1,4 @@
+import { fundLoanFromPool } from "@/lib/poolFunding";
 import { acquireLedgerLock, syncAgentDebts } from "@/lib/ledgerLock";
 import { NextRequest, NextResponse } from "next/server";
 import { recordMandateSpend } from "@/lib/mandateSpend";
@@ -146,6 +147,8 @@ export async function POST(req: NextRequest) {
       txHash: arcTxHash,
       memo: memo || "Credit Facility Draw on Arc Testnet",
     });
+
+    await fundLoanFromPool(borrowAmount);
 
     // 6. Update Agent Financials (Principal + 1.0% Origination Fee)
     // Debt comes from the loans themselves; the other figures are read again,

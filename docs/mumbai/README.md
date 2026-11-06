@@ -70,9 +70,9 @@ flowchart TB
 - **Testnet only.** Nothing here has been used with real money.
 - **The operator is trusted** to repay the pool and report losses honestly. The
   pool's limits bound what that trust can cost, and do not remove it.
-- **The pool is not yet the source of credit.** Lenders can deposit, and the operator can
-  draw and repay, but drawdowns are still funded by Lifeline's operator, not drawn from
-  the pool automatically.
+- **The pool backs loans when it has room.** A loan's principal is drawn from the pool to
+  the operator, and the repayment returns with what the borrower paid on top. With no
+  room, the operator funds the loan itself and lenders earn nothing on it.
 - **Pool interest** goes to whoever is in the pool when it is repaid. The one-day lockup
   delays timing that, and does not remove it.
 - **Marketplace on testnet:** 134 listings take Arc testnet payments, mostly

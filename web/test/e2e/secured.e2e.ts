@@ -94,7 +94,7 @@ async function main() {
   check("$1 deposit adds $0.80 of credit", near(synced.body.creditUsd, 0.8), synced.body.creditUsd);
   check("the line is $1.30", near(synced.body.line.totalCreditLimit, 1.3), synced.body.line.totalCreditLimit);
   const onChain = await getOnChainProfile(HUMAN);
-  check("the facility's limit moved too", near(onChain.creditLimit, 1.3), onChain.creditLimit);
+  check("the facility's limit moved too", near(Number(onChain!.creditLimit), 1.3), onChain!.creditLimit);
 
   const provisioned = await call("POST", "/api/agent/provision", { label: "e2e-secured", capUsd: 2 });
   const agent = provisioned.body.agent?.address as string;
@@ -113,7 +113,7 @@ async function main() {
 
   console.log("\ndefault");
   const profileId = computeProfileId(HUMAN);
-  const debtBefore = (await getOnChainProfile(HUMAN)).outstandingDebt;
+  const debtBefore = Number((await getOnChainProfile(HUMAN))!.outstandingDebt);
   const mark = await operatorWallet.writeContract({
     address: LIFELINE_CREDIT_FACILITY_ADDRESS,
     abi: parseAbi(["function markDefault(bytes32 profileId)"]),
@@ -131,7 +131,7 @@ async function main() {
   check("the deposit is seized", receipt.status === "success", seize);
   const after = await getOnChainProfile(HUMAN);
   const left = await client.readContract({ address: vault, abi: VAULT, functionName: "assetsOf", args: [profileId] });
-  check("the debt fell by what was taken", after.outstandingDebt < debtBefore, `${debtBefore} -> ${after.outstandingDebt}, ${formatUnits(left, 6)} left in the vault`);
+  check("the debt fell by what was taken", Number(after!.outstandingDebt) < debtBefore, `${debtBefore} -> ${after!.outstandingDebt}, ${formatUnits(left, 6)} left in the vault`);
 
   console.log("\nlending pool");
   const pool = await call("GET", `/api/pool?lender=${user.address}`);
@@ -144,6 +144,24 @@ async function main() {
   const out = await call("POST", "/api/pool", { action: "withdraw", amountUsd: 1 });
   const early = await send(out.body.calls).then(() => false, () => true);
   check("withdrawing inside the lockup reverts", early);
+
+  console.log("\nlenders' money behind a loan");
+  const human2 = "0x" + crypto.randomBytes(32).toString("hex");
+  await ensureHumanProfileOnChain(human2);
+  cookie = `lifeline_session=${attachSession(NextResponse.json({}), human2).cookies.get("lifeline_session")!.value}`;
+  const borrower = (await call("POST", "/api/agent/provision", { label: "e2e-pool", capUsd: 2 })).body.agent?.address as string;
+  const p0 = (await call("GET", "/api/pool")).body;
+  const loan = await call("POST", "/api/borrow", { agentAddress: borrower, amount: 0.2, memo: "e2e pool" });
+  check("a loan is made", loan.body.success === true, loan.body.txHash ?? loan.body.error);
+  const p1 = (await call("GET", "/api/pool")).body;
+  check("the pool funded it", near(p1.outstandingUsd - p0.outstandingUsd, 0.2, 0.0001), `lent out ${p0.outstandingUsd} -> ${p1.outstandingUsd}`);
+  const topUp = await operatorWallet.sendTransaction({ to: borrower as `0x${string}`, value: parseUnits("0.3", 18) });
+  await client.waitForTransactionReceipt({ hash: topUp });
+  const repaid = await call("POST", "/api/repay", { agentAddress: borrower, amount: 1 });
+  check("the borrower repays", repaid.body.success === true, repaid.body.txHash ?? repaid.body.error);
+  const p2 = (await call("GET", "/api/pool")).body;
+  check("the principal is back in the pool", near(p2.outstandingUsd, p0.outstandingUsd, 0.0001), `lent out ${p2.outstandingUsd}`);
+  check("lenders earned what the borrower paid", p2.interestEarnedUsd > p0.interestEarnedUsd, `interest ${p0.interestEarnedUsd} -> ${p2.interestEarnedUsd}`);
 
   console.log(failures ? `\n${failures} check(s) failed` : "\nall checks passed");
   process.exit(failures ? 1 : 0);

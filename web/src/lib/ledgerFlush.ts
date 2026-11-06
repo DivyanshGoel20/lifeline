@@ -1,3 +1,4 @@
+import { fundLoanFromPool } from "./poolFunding";
 import { executeOnChainDrawdown } from "./facilityContract";
 import {
   claimForFlush,
@@ -52,6 +53,8 @@ export async function flushAgent(
     // between the two leaves them claimed and recoverable rather than lost.
     dropBatch(batchId);
     backfillLoans(entries, result.txHash);
+    // Batched with the drawdowns, so a cent purchase does not pay gas of its own.
+    await fundLoanFromPool(amountUsdc);
 
     return {
       flushed: true,

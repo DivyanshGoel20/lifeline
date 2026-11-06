@@ -7,6 +7,7 @@ import { executeOnChainRepayment } from "./facilityContract";
 import { invalidateTelemetryCache } from "./telemetryCache";
 import { claimReceipt } from "./receiptStore";
 import { appliedStanding, enforceStanding } from "./standing";
+import { returnRepaymentToPool } from "./poolFunding";
 
 /**
  * An Arc repayment, however it was funded.
@@ -104,6 +105,8 @@ export async function bookArcRepayment(p: {
     humanOwner: p.humanOwner,
     txHash: p.txHash,
   });
+
+  await returnRepaymentToPool(result.principalPaid, result.interestPaid);
 
   const agentPaid = p.agentPaid;
   for (const a of getAgentsByOwner(p.humanOwner)) {
