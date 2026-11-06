@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import type { Agent } from "@/types";
 import { Sheet, Field, ErrorNote } from "../Sheet";
 import type { MarketService } from "./Marketplace";
-import { usd } from "./api";
+import { price } from "./api";
 
 /** An agent buys a marketplace service: from its own balance, or on the human's line. */
 export const BuySheet: React.FC<{
@@ -65,7 +65,7 @@ export const BuySheet: React.FC<{
   };
 
   return (
-    <Sheet open onClose={onClose} title={service.provider} kicker={`marketplace · ${usd(service.priceUsd)}`}>
+    <Sheet open onClose={onClose} title={service.provider} kicker={`marketplace · ${price(service.priceUsd)}`}>
       <div className="space-y-4">
         <p className="text-[12.5px] ink-2 leading-snug">{service.description}</p>
         <div className="mono text-[11px] ink-3 break-all">{service.method} {service.url}</div>
@@ -96,7 +96,7 @@ export const BuySheet: React.FC<{
             {error && <ErrorNote>{error}</ErrorNote>}
             <div className="flex justify-end">
               <button className="btn btn-solid" disabled={busy || !agent} onClick={buy}>
-                {busy ? "Paying…" : `Buy for ${usd(service.priceUsd)}`}
+                {busy ? "Paying…" : `Buy for ${price(service.priceUsd)}`}
               </button>
             </div>
           </>

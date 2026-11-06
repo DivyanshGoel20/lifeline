@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { usd } from "./api";
+import { price } from "./api";
 import { ErrorNote, Field, Loading, Note, Section, useLoad } from "./ui";
 
 export type MarketService = {
@@ -75,7 +75,7 @@ export const Marketplace: React.FC<{
           <div className="flex justify-between gap-4 mono text-[11px]">
             <span className="truncate">{s.provider}</span>
             <span className="shrink-0">
-              {usd(s.priceUsd)} · {s.method}
+              {price(s.priceUsd)} · {s.method}
             </span>
           </div>
           <p className="text-[12.5px] ink-2 leading-snug">{s.description || "No description."}</p>

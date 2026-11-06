@@ -3,6 +3,7 @@
 import { useCallback, useRef, useEffect, useMemo, useState } from "react";
 import type { Rail, Agent, ActivityItem } from "@/types";
 import type { LeadData } from "@/components/Monitor";
+import { CREDIT_TIERS } from "./reputationEngine";
 
 /**
  * Everything the dashboard knows and can do, for either front end.
@@ -52,7 +53,7 @@ export function useLifeline(
   const [sui, setSui] = useState<{ ready: boolean; network: string | null; checked?: boolean }>({ ready: false, network: null });
 
   // Arc and Sui are separate lines, each with its own limit.
-  const [limits, setLimits] = useState<Record<Rail, number>>({ arc: 10, sui: 10 });
+  const [limits, setLimits] = useState<Record<Rail, number>>({ arc: CREDIT_TIERS[0].creditLimit, sui: CREDIT_TIERS[0].creditLimit });
   const [allAgents, setAgents] = useState<Agent[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [obligations, setObligations] = useState<Obligation[]>([]);

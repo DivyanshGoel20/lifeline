@@ -96,6 +96,9 @@ export const sameAddress = (a: string | null | undefined, b: string | null | und
 export const usd = (n: number) =>
   `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+/** A price, with enough decimals that a fraction of a cent does not read as free. */
+export const price = (n: number) => (n > 0 && n < 0.01 ? `$${n.toFixed(4)}` : usd(n));
+
 /** A positive amount with at most 6 decimals, or null. */
 export function parseAmount(raw: string): number | null {
   const t = raw.trim();
