@@ -168,7 +168,7 @@ async function main() {
   check("a $0.20 purchase with $0.09 held goes to credit", partial.body.success && partial.body.fundingSource === "LIFELINE_FACILITY", partial.body.error ?? "");
   // Lifeline's Gateway pays the seller the whole price - one x402 payment
   // has one payer - so the whole price is what the human owes.
-  check("the whole price is lent, not only the shortfall", Number(partial.body.borrowed) === 1, `borrowed ${partial.body.borrowed}`);
+  check("the whole price is lent, not only the shortfall", near(Number(partial.body.borrowed), 0.2), `borrowed ${partial.body.borrowed}`);
   check("A's debt rose by the whole price plus its fee", near((await debtOf(a)) - partialBefore, 0.202), `+${((await debtOf(a)) - partialBefore).toFixed(4)}`);
   check("A's own balance was left alone", near(await gatewayOf(a), afterOwn, 0.0011), `gateway ${await gatewayOf(a)}`);
 
