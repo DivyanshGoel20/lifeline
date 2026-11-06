@@ -1,3 +1,4 @@
+import { collateralCreditUsd } from "./collateralStore";
 import fs from "fs";
 import { writeJsonAtomic } from "./atomicWrite";
 import path from "path";
@@ -125,7 +126,8 @@ export function getHumanFacilityStats(
   // Arc's agents only: a Sui agent is on the Sui line.
   const humanAgents = getAgentsByOwner(humanOwner).filter((a) => agentRail(a) === "arc");
   const tier = getHumanCreditTier(humanOwner, "arc");
-  const totalCreditLimit = tier.creditLimit;
+  // What their record has earned, plus what their deposit backs.
+  const totalCreditLimit = tier.creditLimit + collateralCreditUsd(humanOwner);
   const arcOutstandingDebt = Math.round(
     humanAgents.reduce((sum, a) => sum + (a.outstandingDebt || 0), 0) * 10000
   ) / 10000;

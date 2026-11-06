@@ -18,6 +18,8 @@
     "e2e:standing": "tsx --env-file-if-exists=../.env test/e2e/standing.e2e.ts"
   },
   "dependencies": {
+    "@circle-fin/adapter-viem-v2": "^1.20.1",
+    "@circle-fin/bridge-kit": "^1.17.1",
     "@circle-fin/x402-batching": "^3.5.0",
     "@lifeline/sui": "*",
     "@stripe/react-stripe-js": "^6.12.0",

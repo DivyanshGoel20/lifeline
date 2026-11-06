@@ -14,6 +14,7 @@ import { getAgentPrivateKey, authorizeAgentSpend } from "./agentKeys";
 import { depositToAgentGateway } from "./disburse";
 import { refHash } from "./paymentRef";
 import { ARC_TREASURY } from "./browserChain";
+import { collateralCreditUsd } from "./collateralStore";
 
 export const arcTestnetChain = defineChain({
   id: ARC_TESTNET_CHAIN_ID,
@@ -706,7 +707,9 @@ export async function updateOnChainCreditLimit(
     });
 
     const profileId = computeProfileId(humanOwner);
-    const limitUnits = parseUnits(newLimitUsdc.toString(), 6);
+    // Callers pass the earned tier; a deposit backs credit on top of it, so a
+    // tier change must not write the deposit's credit away.
+    const limitUnits = parseUnits((newLimitUsdc + collateralCreditUsd(humanOwner)).toFixed(6), 6);
 
     const hash = await walletClient.writeContract({
       address: LIFELINE_CREDIT_FACILITY_ADDRESS,

@@ -68,6 +68,33 @@ export async function commitArcRepayment(p: {
   // post its hash later as proof of a repayment of their own.
   if (onChain.transferTxHash) claimReceipt(onChain.transferTxHash, p.humanOwner);
 
+  const result = await bookArcRepayment({
+    humanOwner: p.humanOwner,
+    payingAgent: p.payingAgent,
+    beneficiaryAddress: p.beneficiaryAddress,
+    amount: p.amount,
+    targetLoanId: p.targetLoanId,
+    txHash: onChain.txHash,
+    // Only an agent paying from its wallet is poorer for it; a card payment
+    // came from the human.
+    agentPaid: p.funding.kind === "agent",
+  });
+  return { result, txHash: onChain.txHash, transferTxHash: onChain.transferTxHash };
+}
+
+/**
+ * Book money that has already reached the facility: the loans, the agents, and
+ * the line coming back if that was what stood in its way.
+ */
+export async function bookArcRepayment(p: {
+  humanOwner: string;
+  payingAgent: Agent;
+  beneficiaryAddress: string;
+  amount: number;
+  targetLoanId?: string;
+  txHash: string;
+  agentPaid: boolean;
+}) {
   // FIFO: oldest loan first, interest then principal.
   const result = processRepayment({
     payingAgentAddress: p.payingAgent.address,
@@ -75,12 +102,10 @@ export async function commitArcRepayment(p: {
     targetAgentAddress: p.beneficiaryAddress,
     targetLoanId: p.targetLoanId,
     humanOwner: p.humanOwner,
-    txHash: onChain.txHash,
+    txHash: p.txHash,
   });
 
-  // Only an agent paying from its wallet is poorer for it; a card payment
-  // came from the human.
-  const agentPaid = p.funding.kind === "agent";
+  const agentPaid = p.agentPaid;
   for (const a of getAgentsByOwner(p.humanOwner)) {
     const remainingDebt =
       Math.round(
@@ -105,5 +130,5 @@ export async function commitArcRepayment(p: {
   if (appliedStanding(p.humanOwner).arc?.status && appliedStanding(p.humanOwner).arc?.status !== "good") {
     await enforceStanding(p.humanOwner).catch((err: any) => console.warn("[standing]", err?.message ?? err));
   }
-  return { result, txHash: onChain.txHash, transferTxHash: onChain.transferTxHash };
+  return result;
 }

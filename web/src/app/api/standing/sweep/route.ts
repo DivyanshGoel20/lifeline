@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAllAgents } from "@/lib/agentStore";
 import { enforceStanding, standingHumans } from "@/lib/standing";
 import { reconcileSui, suiConfigured } from "@/lib/suiRail";
+import { seizeCollateral, vaultAddress } from "@/lib/securedLine";
 
 export const dynamic = "force-dynamic";
 
@@ -21,11 +22,18 @@ export async function POST(req: NextRequest) {
   const sui = suiConfigured() ? await reconcileSui().catch((err) => ({ error: String(err?.message ?? err) })) : null;
   const humans = new Set([...getAllAgents().map((a) => a.humanOwner).filter(Boolean), ...standingHumans()]);
   const changed: { human: string; arc: string; sui: string }[] = [];
+  const seized: unknown[] = [];
   for (const h of humans) {
     const r = await enforceStanding(h).catch(() => null);
     if (r && (r.arc.status !== "good" || r.sui.status !== "good")) {
       changed.push({ human: `${h.slice(0, 10)}…`, arc: r.arc.status, sui: r.sui.status });
     }
+    // In default with a deposit: the deposit pays first. Anyone could call this
+    // on chain; the sweep just means nobody has to.
+    if (r?.arc.status === "defaulted" && vaultAddress()) {
+      const s = await seizeCollateral(h).catch((err) => ({ error: String(err?.message ?? err), takenUsd: 0 }));
+      if (s.takenUsd > 0 || "error" in s) seized.push({ human: `${h.slice(0, 10)}…`, ...s });
+    }
   }
-  return NextResponse.json({ checked: humans.size, notGood: changed, sui });
+  return NextResponse.json({ checked: humans.size, notGood: changed, seized, sui });
 }
