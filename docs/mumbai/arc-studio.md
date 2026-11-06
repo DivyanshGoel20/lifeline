@@ -3,50 +3,63 @@
 The track requires: built in Arc Studio, a shareable project URL, and Studio shown
 in the demo.
 
-## Status
+**Project:** https://studio.arc.io/app/db053ebe-5c54-478f-a695-2ea57b95a171
 
-**Not done yet.** The contracts so far were written outside Studio, because
-signing in needs a person at a browser. Everything below still has to happen
-before this can be submitted to the Arc track.
+## What was built there
 
-## Steps
+| Studio turn | Prompt | Result |
+|---|---|---|
+| Contracts and audit | [01-contracts.md](studio/01-contracts.md) | `LifelineCollateralVault`, `LifelineLendingPool`, tests, and the fixes the review led to |
+| Lockup and funding | [03-deploy.md](studio/03-deploy.md) | Lender lockup, 229 tests in Studio |
+| Screens | [02-ui.md](studio/02-ui.md) | Marketplace, deposit-backed credit, lending pool, limits and cross-chain repay, in Lifeline's design |
+| Deployment | [04-deploy.md](studio/04-deploy.md) | Everything in [deployments.arc-testnet.json](../../contracts/deployments.arc-testnet.json) |
 
-1. Sign in once, in a normal terminal:
+The screens live in `web/src/components/arc/`, copied from Studio's `src/lifeline/`.
+`BuySheet.tsx` and the wiring into the dashboard were added outside Studio, to
+connect them to the existing app. The contracts in `contracts/src/` and the tests
+in `contracts/test/` also come from Studio, with import paths adjusted to this repo.
 
-   ```bash
-   arc-studio login --paste
-   arc-studio whoami
-   ```
+## Deployed on Arc testnet
 
-2. Bring the contracts in, round-trip, so Studio's changes come back as diffs:
+| Contract | Address | Owner |
+|---|---|---|
+| LifelineCollateralVault | `0x59B00E85d191bCC376f2593c937E260722bd10Fb` | `0x5233E4253bC38e8CF517c0768dbC8aCC886F32B3` |
+| LifelineLendingPool | `0x70cF07af1Cd055ceCeE3A2efDc7d623D23EDA02A` | `0x5233E4253bC38e8CF517c0768dbC8aCC886F32B3` |
+| LifelineCreditFacility (from Tokyo, unchanged) | `0xd25Fd339E08aad2534dA99B3A02dEec6EC1A818f` | `0x5233E4253bC38e8CF517c0768dbC8aCC886F32B3` |
 
-   ```bash
-   arc-studio run \
-     --file contracts/src/LifelineCollateralVault.sol:contracts/LifelineCollateralVault.sol \
-     --file contracts/src/LifelineLendingPool.sol:contracts/LifelineLendingPool.sol \
-     --file contracts/test/LifelineCollateralVault.t.sol:contracts/test/ \
-     --file contracts/test/LifelineLendingPool.t.sol:contracts/test/ \
-     "Audit these contracts for Arc, fix what you find, test them, and deploy both to Arc testnet"
-   ```
+Ownership moved from Studio's deployer to Lifeline's operator, so the backend can
+write to both contracts.
 
-3. Check what it did and bring changes back:
+## How the deployment was checked
 
-   ```bash
-   arc-studio deployments
-   arc-studio pull --changed --out ./studio-out --dry-run
-   ```
+Studio's report was not taken on trust. Separately from Studio:
 
-4. Get the workspace URL for the submission:
+- Every transaction in the deployment record was read from Arc: 39 succeeded and 3
+  reverted, the 3 being the deliberate refusals the test expects.
+- `owner()` and every parameter were read back from the chain.
+- The deployed bytecode of both contracts was compared with a compile of this
+  repo's source. They match, leaving aside constructor-set values and metadata.
+- `forge test` passes here, and `npm run e2e:secured` runs the whole path against
+  the deployed contracts.
 
-   ```bash
-   arc-studio open
-   ```
+## Found by the review
 
-   The docs do not say whether others can open that URL. Check it in a private
-   window before submitting.
+- **A borrower could dodge seizure.** The Tokyo facility lets a profile's owner call
+  `suspendOwnProfile`, which overwrites `Defaulted`. It cannot be changed in place,
+  so the vault now keeps its own record of a default (`latchDefault`).
+- **Yield sources with fees could shift cost to other depositors.** The vault now
+  refuses sources that charge on the way in or out.
+- **A lender could join just before a repayment and leave after it,** taking a share
+  of interest earned before they arrived. Lenders are now locked in for a day. This
+  delays the trick and does not remove it: interest is still shared by whoever is in
+  the pool when it is repaid.
 
-## Ownership after a Studio deploy
+## Before submitting
 
-The vault's owner binds wallets to profiles, and the pool's owner draws funds.
-If Studio deploys with its own wallet, ownership has to move to Lifeline's
-operator with `transferOwnership`, or the backend cannot write to them.
+- **The project URL is not public yet.** Logged out, it redirects to Arc Studio's home
+  page, so a judge cannot see it. Look for sharing options in the Studio workspace, or
+  ask Arc's team at the booth how they want it shared. The track requires a shareable URL.
+- `arc-studio deployments` lists nothing, because the contracts were deployed by a script
+  in the sandbox rather than through Studio's deploy workflow. The deployment record and
+  explorer links above are the evidence. Ask Arc's team whether that is enough.
+- Show Studio in the demo video.

@@ -7,8 +7,9 @@ These are the instructions this phase was built from.
 
 - Build on Lifeline in the Continuity track, for Arc first.
 - Work in this repo, on testnet for now, with mainnet a later decision.
-- Keep the interface exactly as it is.
-- Use Arc Studio, and check the qualification requirements.
+- Keep the interface's style and design, and build screens for the new features in it.
+- Arc Studio is required: rebuild in it, deploy on Arc testnet, and keep testing.
+- Lower the credit tiers to $0.50, then $1, then $2.
 - Commit regularly. The team pushes.
 
 ## The plan agreed before building
@@ -34,3 +35,13 @@ These are the instructions this phase was built from.
   Lifeline's servers.
 - **Seller record ignores 4xx responses:** a refusal can come from Lifeline's own
   request or signature, which says nothing about the seller.
+- **Seizure latch:** Arc Studio's review showed a borrower could suspend their own profile
+  to overwrite a default. The facility is already deployed, so the vault keeps its own record.
+- **Lender lockup:** one day, against depositing just before a repayment and leaving after it.
+- **Smaller demo prices and auto-approve limits:** a $5 report cannot be bought on a $0.50 line.
+  The report became $0.45 and the exposure curve $0.20. Payments above $0.40 go to the human.
+
+## Arc Studio prompts
+
+The prompts sent to Arc Studio are in [studio/](studio/), in the order listed in
+[arc-studio.md](arc-studio.md).

@@ -177,7 +177,7 @@ Payments run on Arc testnet; addresses are screened against mainnet data.
 **Demo:** buy the *Alpha signal* → paid. Buy the *Unvetted feed* (payee is a
 known scammer from Intercepta's test list, score 100) or the *Discount feed*
 (pays in a fake USDC) → refused before signing, reason shown on the receipt.
-A $5 purchase → held for the human. Live: `npm run e2e:intercepta`.
+A $0.45 purchase → held for the human. Live: `npm run e2e:intercepta`.
 
 **Feedback**
 
