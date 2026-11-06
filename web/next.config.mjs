@@ -33,6 +33,8 @@ if (fs.existsSync(rootEnvPath)) {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // The tests import packages only the repo root installs.
+  typescript: { tsconfigPath: "tsconfig.build.json" },
   // On Vercel the Sui deployment records are read at run time, so they must ship.
   experimental: {
     outputFileTracingRoot: path.resolve(__dirname, ".."),
