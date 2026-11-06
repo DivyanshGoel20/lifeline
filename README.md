@@ -245,3 +245,11 @@ npm run e2e:mcp               # Claude Code tools end to end
 What is new since Tokyo, and how it was built: [docs/mumbai](docs/mumbai/README.md).
 Uniswap integration, with links to the code: [docs/mumbai/uniswap.md](docs/mumbai/uniswap.md).
 Feedback for Uniswap: [FEEDBACK.md](FEEDBACK.md).
+
+### Whitechain
+
+Credit and gasless USDT payments for AI agents: [docs/mumbai/whitechain.md](docs/mumbai/whitechain.md).
+
+An AI agent cannot open a card account or pass a bank's checks. USDT on Whitechain lets it pay per request, at any hour, in amounts as small as a cent, and a card network could not settle a $0.01 payment to a piece of software.
+
+Going to mainnet: [docs/mumbai/mainnet.md](docs/mumbai/mainnet.md).

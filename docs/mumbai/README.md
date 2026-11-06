@@ -8,7 +8,7 @@ Everything after it is new. See exactly what changed with:
 git diff pre-mumbai HEAD --stat
 ```
 
-**Bounties:** Arc Studio Continuity Track: Bring Your Project to Arc. Uniswap, see [uniswap.md](uniswap.md).
+**Bounties:** Arc Studio Continuity Track: Bring Your Project to Arc. Uniswap, see [uniswap.md](uniswap.md). Whitechain, see [whitechain.md](whitechain.md).
 
 ## What is new
 
@@ -22,6 +22,8 @@ git diff pre-mumbai HEAD --stat
 | New credit tiers | `web/src/lib/reputationEngine.ts` | Unsecured lines start at $0.50, then $1 and $2. A deposit raises them further |
 | Screens for all of this | `web/src/components/arc/` | Marketplace, deposit-backed credit, lending pool, limits and cross-chain repayment on the Arc dashboard |
 | Repay in any token | `web/src/lib/lifelineJar.ts`, `/api/jar`, [uniswap.md](uniswap.md) | Agents pay debt with tokens on Base through a Uniswap Token Jar. Built and tested on a fork, not deployed |
+| USDT credit on Whitechain | `web/src/lib/whitechain/`, `/whitechain`, [whitechain.md](whitechain.md) | An x402 facilitator and gasless payments in USDT, so an agent with no WBT and no USDT can buy on credit |
+| A switch to mainnet | `NEXT_PUBLIC_ARC_NETWORK`, [mainnet.md](mainnet.md) | One setting moves all of Arc to mainnet. Not yet run with real money |
 | Cross-chain repayment | `web/src/lib/crosschainRepay.ts`, `POST /api/repay/crosschain` | Bridge Kit moves an agent's USDC to Arc, then repays the debt with what arrived |
 
 ## Architecture
