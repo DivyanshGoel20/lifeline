@@ -159,7 +159,7 @@ export type WcPurchase = {
 
 /** What the agent does when a seller says 402. Nothing here needs WBT from the agent. */
 export async function buyOnWhitechain(
-  p: { human: string; agent: string; url: string },
+  p: { human: string; agent: string; url: string; /** A mandate's remaining cap, when an agent calls for itself. */ maxCreditUsd?: number },
   deps: { fetcher?: Fetcher; key?: (a: string) => `0x${string}` | null; allow?: (a: string, usd: number) => { ok: boolean; reason?: string } } = {}
 ): Promise<WcPurchase> {
   const { fetcher = fetch, key = getAgentPrivateKey as any, allow = authorizeAgentSpend } = deps;
@@ -186,6 +186,9 @@ export async function buyOnWhitechain(
     const owed = onCredit ? round(price * (1 + ORIGINATION_FEE_RATE)) : 0;
 
     if (onCredit) {
+      if (p.maxCreditUsd !== undefined && owed > p.maxCreditUsd) {
+        throw new Error(`That needs $${owed.toFixed(2)} of credit and this agent's mandate has $${p.maxCreditUsd.toFixed(2)} left.`);
+      }
       const line = wcLine(p.human);
       if (owed > line.headroomUsd) {
         throw new Error(`That needs $${owed.toFixed(2)} of credit and $${line.headroomUsd.toFixed(2)} is left on the Whitechain line.`);
