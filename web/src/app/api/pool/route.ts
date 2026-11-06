@@ -15,6 +15,8 @@ const POOL_ABI = parseAbi([
   "function totalInterestEarned() view returns (uint256)",
   "function totalWrittenOff() view returns (uint256)",
   "function assetsOf(address lender) view returns (uint256)",
+  "function lockup() view returns (uint256)",
+  "function lockedUntil(address lender) view returns (uint256)",
   "function deposit(uint256 assets) returns (uint256)",
   "function withdraw(uint256 assets) returns (uint256)",
 ]);
@@ -33,7 +35,7 @@ export async function GET(req: NextRequest) {
   try {
     const client = getPublicClient();
     const read = (functionName: any, args: any[] = []) => client.readContract({ address, abi: POOL_ABI, functionName, args } as any) as Promise<bigint>;
-    const [totalAssets, cash, outstanding, exposureCap, maxUtilizationBps, utilizationBps, drawable, interest, writtenOff] = await Promise.all([
+    const [totalAssets, cash, outstanding, exposureCap, maxUtilizationBps, utilizationBps, drawable, interest, writtenOff, lockup] = await Promise.all([
       read("totalAssets"),
       read("cash"),
       read("outstanding"),
@@ -43,6 +45,7 @@ export async function GET(req: NextRequest) {
       read("drawable"),
       read("totalInterestEarned"),
       read("totalWrittenOff"),
+      read("lockup"),
     ]);
     return NextResponse.json({
       configured: true,
@@ -56,7 +59,10 @@ export async function GET(req: NextRequest) {
       drawableUsd: usd(drawable),
       interestEarnedUsd: usd(interest),
       writtenOffUsd: usd(writtenOff),
-      ...(lender ? { lenderAssetsUsd: usd(await read("assetsOf", [lender])) } : {}),
+      lockupSeconds: Number(lockup),
+      ...(lender
+        ? { lenderAssetsUsd: usd(await read("assetsOf", [lender])), lenderLockedUntil: Number(await read("lockedUntil", [lender])) }
+        : {}),
     });
   } catch (err: any) {
     return NextResponse.json({ configured: true, error: err?.shortMessage ?? err?.message ?? "Could not read the pool" }, { status: 502 });
