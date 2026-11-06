@@ -87,7 +87,14 @@ function bookFile(): string {
 
 const bookKey = (agent: string) => `${requireDeployment().facilityId}:${agent}`;
 
+/** Where the book lives can be replaced, for hosts with no lasting disk. */
+let bookStore: { read(): Record<string, BookEntry> | null; write(book: Record<string, BookEntry>): void } | null = null;
+export const setBookStore = (s: typeof bookStore) => {
+  bookStore = s;
+};
+
 export function readBook(): Record<string, BookEntry> {
+  if (bookStore) return bookStore.read() ?? {};
   try {
     const f = bookFile();
     return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, "utf8")) : {};
@@ -97,6 +104,7 @@ export function readBook(): Record<string, BookEntry> {
 }
 
 function writeBook(book: Record<string, BookEntry>) {
+  if (bookStore) return bookStore.write(book);
   const f = bookFile();
   fs.mkdirSync(path.dirname(f), { recursive: true });
   const tmp = `${f}.${process.pid}.tmp`;

@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "./storeFs";
 import path from "path";
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { writeJsonAtomic } from "./atomicWrite";

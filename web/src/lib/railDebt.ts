@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "./storeFs";
 import path from "path";
 import { writeJsonAtomic } from "./atomicWrite";
 import { deployment } from "@lifeline/sui";

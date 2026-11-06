@@ -211,6 +211,8 @@ app.get("/catalogue", (_req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+export default app;
+
+if (!process.env.VERCEL) app.listen(PORT, () => {
   console.log(`Lifeline Premium API running on http://localhost:${PORT}`);
 });

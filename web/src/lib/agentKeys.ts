@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "./storeFs";
 import path from "path";
 import crypto from "node:crypto";
 import { privateKeyToAccount } from "viem/accounts";

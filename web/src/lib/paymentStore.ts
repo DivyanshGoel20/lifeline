@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "./storeFs";
 import { writeJsonAtomic } from "./atomicWrite";
 import path from "path";
 

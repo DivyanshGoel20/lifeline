@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import storeFs, { usesRedis } from "./storeFs";
 
 /**
  * Write JSON to disk without leaving a half-written file behind.
@@ -10,6 +11,8 @@ import path from "path";
  * JSON and taking every loan record with it.
  */
 export function writeJsonAtomic(filePath: string, data: unknown): void {
+  if (usesRedis() && storeFs.isLedger(filePath)) return storeFs.writeLedger(filePath, JSON.stringify(data));
+
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 

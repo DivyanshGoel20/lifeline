@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "@/lib/storeFs";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { isAddress } from "viem";

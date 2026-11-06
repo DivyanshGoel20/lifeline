@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+web/data
+sui/data
+contracts/lib
+contracts/out
+contracts/cache
+sui/lifeline/build
+.git
+**/node_modules
+**/.next

@@ -37,3 +37,6 @@ export async function POST(req: NextRequest) {
   }
   return NextResponse.json({ checked: humans.size, notGood: changed, seized, sui });
 }
+
+/** Vercel's cron calls with GET, and the same bearer token. */
+export const GET = POST;

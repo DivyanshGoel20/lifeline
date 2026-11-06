@@ -16,7 +16,9 @@ import {
   toUnits,
   walletUnits,
   type SuiPayResult,
+  setBookStore,
 } from "@lifeline/sui";
+import storeFs, { usesRedis } from "./storeFs";
 import { getAgentPrivateKey, authorizeAgentSpend } from "./agentKeys";
 import { getSuiFacilityStats } from "./agentStore";
 import { recordRepaymentInReputation } from "./reputationStore";
@@ -39,6 +41,16 @@ import { OverSpendingCap, approvalCovers, capHoldVerdict } from "./spendingCap";
 import { borrowingBlocked, enforceStanding } from "./standing";
 import type { Verdict } from "./intercepta";
 import type { Agent } from "@/types";
+
+
+// Sui's book of obligations lives in a file too, and is kept with the other ledgers.
+if (usesRedis()) {
+  const BOOK = "/data/sui-agents.json";
+  setBookStore({
+    read: () => (storeFs.existsSync(BOOK) ? JSON.parse(storeFs.readFileSync(BOOK, "utf8")) : null),
+    write: (book) => storeFs.writeLedger(BOOK, JSON.stringify(book)),
+  });
+}
 
 /**
  * Lifeline's Sui rail, as the web app sees it.

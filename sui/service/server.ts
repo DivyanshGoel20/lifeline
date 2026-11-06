@@ -24,7 +24,8 @@ const MAX_RECORDS = 400;
 
 const deployment = requireDeployment();
 const PAY_TO = process.env.SUI_SELLER_ADDRESS || deployment.operator;
-const settler = createSettler({ ledgerFile: path.join(suiDir(), "data", `settled-${deployment.network}.json`) });
+// A function's own disk is read-only outside /tmp, and does not last.
+const settler = createSettler({ ledgerFile: path.join(process.env.VERCEL ? "/tmp" : path.join(suiDir(), "data"), `settled-${deployment.network}.json`) });
 
 function clampRecords(raw: unknown): number {
   const first = Array.isArray(raw) ? raw[0] : raw;
@@ -133,7 +134,9 @@ app.get("/risk", async (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
+export default app;
+
+if (!process.env.VERCEL) app.listen(PORT, () => {
   console.log(`Lifeline Sui Feed  http://localhost:${PORT}`);
   console.log(`  network  ${x402Network()}`);
   console.log(`  asset    ${deployment.coinType}`);

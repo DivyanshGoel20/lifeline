@@ -33,6 +33,11 @@ if (fs.existsSync(rootEnvPath)) {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // On Vercel the Sui deployment records are read at run time, so they must ship.
+  experimental: {
+    outputFileTracingRoot: path.resolve(__dirname, ".."),
+    outputFileTracingIncludes: { "/**": ["../sui/deployments/**", "../sui/lifeline/Move.toml"] },
+  },
   // @lifeline/sui is the repo's own sui/ workspace, shipped as TypeScript.
   transpilePackages: ["@worldcoin/idkit", "@worldcoin/idkit-core", "@lifeline/sui"],
 
