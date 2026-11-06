@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: NextRequest) {
   try {
-    const action = process.env.NEXT_PUBLIC_WORLD_ACTION || "lifeline-human-verify";
+    const action = process.env.NEXT_PUBLIC_WORLD_ACTION || "lifeline-mumbai";
     const rpId = process.env.NEXT_PUBLIC_WORLD_RP_ID || "rp_62d19ed87590c550";
     const signingKeyHex = process.env.WORLD_RP_SIGNING_KEY || process.env.WORLD_API_KEY || "";
 

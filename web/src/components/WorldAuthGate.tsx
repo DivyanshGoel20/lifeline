@@ -98,7 +98,7 @@ const RealWorldAuthGate: React.FC<WorldAuthGateProps> = ({ onVerified, onSignIn 
   const [pairing, setPairing] = useState(false);
 
   const appId = (process.env.NEXT_PUBLIC_WORLD_APP_ID || "app_6ad9b6ef952f1c2a9a70a58e05aa9878") as `app_${string}`;
-  const action = process.env.NEXT_PUBLIC_WORLD_ACTION || "lifeline-human-verify";
+  const action = process.env.NEXT_PUBLIC_WORLD_ACTION || "lifeline-mumbai";
   const worldEnvironment = (process.env.NEXT_PUBLIC_WORLD_ENVIRONMENT || "production") as "production" | "staging";
 
   useEffect(() => {

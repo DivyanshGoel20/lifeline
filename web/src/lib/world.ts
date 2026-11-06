@@ -9,7 +9,7 @@ export async function verifyWorldSelfieProof(
   opts: { allowSession?: boolean } = {}
 ): Promise<{ success: boolean; error?: string; code?: string; nullifier?: string }> {
   const rpId = process.env.NEXT_PUBLIC_WORLD_RP_ID || "rp_62d19ed87590c550";
-  const action = process.env.NEXT_PUBLIC_WORLD_ACTION || "lifeline-human-verify";
+  const action = process.env.NEXT_PUBLIC_WORLD_ACTION || "lifeline-mumbai";
 
   if (!rpId) {
     return {

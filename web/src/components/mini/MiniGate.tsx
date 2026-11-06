@@ -44,7 +44,7 @@ export const MiniGate: React.FC<{ onSignedIn: (human: string) => void; haptic: (
   const serverFailure = useRef<{ code?: string; message: string } | null>(null);
 
   const appId = (process.env.NEXT_PUBLIC_WORLD_APP_ID || "app_6ad9b6ef952f1c2a9a70a58e05aa9878") as `app_${string}`;
-  const action = process.env.NEXT_PUBLIC_WORLD_ACTION || "lifeline-human-verify";
+  const action = process.env.NEXT_PUBLIC_WORLD_ACTION || "lifeline-mumbai";
 
   useEffect(() => {
     setInWorldApp(MiniKit.isInWorldApp());
