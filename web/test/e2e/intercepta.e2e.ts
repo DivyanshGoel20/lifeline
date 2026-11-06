@@ -118,11 +118,12 @@ async function main() {
   const again = await call("POST", `/api/pay/holds/${held.body.hold?.holdId}`, { action: "approve" });
   check("a declined hold cannot then be approved", again.status === 409, again.body.error);
 
+  const second = await call("POST", "/api/pay", { url: `${PREMIUM}/dossier`, agentAddress: agent });
+  // Before the next purchase: on a small line, $0.45 fits only with nothing owed.
   const heldAgain = await call("POST", "/api/pay", { url: `${PREMIUM}/risk-curve`, agentAddress: agent });
   // $0.20 is under the $0.40 auto-approve line, so this one should simply clear.
   check("a clean $0.20 purchase on credit clears on its own", heldAgain.status === 200 && heldAgain.body.screening?.decision === "pay",
     `${say(heldAgain.body.screening)} · lent $${heldAgain.body.borrowed}`);
-  const second = await call("POST", "/api/pay", { url: `${PREMIUM}/dossier`, agentAddress: agent });
   const approved = await call("POST", `/api/pay/holds/${second.body.hold?.holdId}`, { action: "approve" });
   if (process.env.WORLD_AGENTS_CLIENT_ID) {
     // Releasing it takes a fresh World ID approval (npm run e2e:world-agents).

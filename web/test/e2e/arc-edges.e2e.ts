@@ -148,7 +148,7 @@ async function main() {
   // ── Own balance ───────────────────────────────────────────────────────
   heading("an agent with its own balance");
   const aKey = getAgentPrivateKey(a)!;
-  await sendUsdc(process.env.PRIVATE_KEY as `0x${string}`, a, 0.62);
+  await sendUsdc(process.env.PRIVATE_KEY as `0x${string}`, a, 0.12);
   const aGateway = new GatewayClient({ chain: "arcTestnet", privateKey: aKey });
   await aGateway.deposit("0.1");
   const funded = await waitForGateway(a, (n) => n >= 0.1);
