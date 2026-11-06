@@ -71,7 +71,7 @@ async function main() {
   check("agent provisioned", provisioned.status === 200 && !!agent, agent);
   check("agent authorised on the facility", provisioned.body.authorizedOnChain === true, provisioned.body.authorizationError ?? "");
 
-  const borrow = await call("POST", "/api/borrow", { agentAddress: agent, amount: 0.25, memo: "e2e" });
+  const borrow = await call("POST", "/api/borrow", { agentAddress: agent, amount: 0.1, memo: "e2e" });
   check("direct drawdown", borrow.status === 200 && borrow.body.success, borrow.body.txHash ?? borrow.body.error);
 
   const over = await call("POST", "/api/borrow", { agentAddress: agent, amount: 50 });

@@ -104,7 +104,7 @@ export function creditRefusal(p: { human: string; amountUsd: number; seller?: st
     return `Lifeline's lending is at its limit ($${status.outstandingUsd.toFixed(2)} of $${limits.poolCapUsd.toFixed(2)} out on loan).`;
   }
   if (status.lentTodayUsd + p.amountUsd > limits.dailyNewCreditUsd + 1e-9) {
-    return `Lifeline has reached its limit on new credit for today ($${limits.dailyNewCreditUsd.toFixed(2)}).`;
+    return `That would take Lifeline past its limit on new credit for today ($${limits.dailyNewCreditUsd.toFixed(2)}).`;
   }
   if (p.seller) {
     if (isSelfDealing(p.human, p.seller)) {
@@ -116,7 +116,7 @@ export function creditRefusal(p: { human: string; amountUsd: number; seller?: st
     }
     const today = lentToSellerToday(p.seller, now);
     if (today + p.amountUsd > limits.sellerDailyUsd + 1e-9) {
-      return `Lifeline has reached today's credit limit for this seller ($${limits.sellerDailyUsd.toFixed(2)}).`;
+      return `That would take Lifeline past today's credit limit for this seller ($${limits.sellerDailyUsd.toFixed(2)}).`;
     }
   }
   return null;

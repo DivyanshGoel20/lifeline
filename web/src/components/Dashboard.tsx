@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WorldAuthGate } from "@/components/WorldAuthGate";
 import { Header } from "@/components/Header";
@@ -17,7 +17,14 @@ import { StandingBanner } from "@/components/StandingBanner";
 import { PurchaseModal } from "@/components/PurchaseModal";
 import { RepayModal } from "@/components/RepayModal";
 import { LifelineMark } from "@/components/Pulse";
+import { Marketplace, type MarketService } from "@/components/arc/Marketplace";
+import { BuySheet } from "@/components/arc/BuySheet";
+import { SecuredCredit } from "@/components/arc/SecuredCredit";
+import { LendingPool } from "@/components/arc/LendingPool";
+import { LendingLimits } from "@/components/arc/LendingLimits";
+import { CrossChainRepay } from "@/components/arc/CrossChainRepay";
 import { useLifeline } from "@/lib/useLifeline";
+import { useWallet } from "@/lib/useWallet";
 import type { Rail } from "@/types";
 
 /**
@@ -27,6 +34,8 @@ import type { Rail } from "@/types";
 export function Dashboard({ rail }: { rail: Rail }) {
   const L = useLifeline({ rail });
   const router = useRouter();
+  const wallet = useWallet();
+  const [buying, setBuying] = useState<MarketService | null>(null);
 
   // Remember the rail, so / opens where you left off.
   useEffect(() => {
@@ -102,6 +111,23 @@ export function Dashboard({ rail }: { rail: Rail }) {
             )}
           </div>
         </div>
+
+        {L.rail === "arc" && (
+          <div className="pb-10">
+            <Marketplace onBuy={setBuying} refreshTrigger={L.refreshTrigger} />
+            <div className="grid gap-x-12 lg:grid-cols-2">
+              <SecuredCredit wallet={wallet} refreshTrigger={L.refreshTrigger} onChanged={L.done} />
+              <div>
+                <LendingLimits refreshTrigger={L.refreshTrigger} />
+                <CrossChainRepay
+                  agents={L.agents.filter((a) => (a.rail ?? "arc") === "arc").map((a) => ({ address: a.address, name: a.name }))}
+                  onChanged={L.done}
+                />
+              </div>
+            </div>
+            <LendingPool wallet={wallet} refreshTrigger={L.refreshTrigger} onChanged={L.done} />
+          </div>
+        )}
       </main>
 
       <footer className="rule-t">
@@ -110,6 +136,8 @@ export function Dashboard({ rail }: { rail: Rail }) {
           <span>{L.rail === "arc" ? "Arc testnet · 5042002" : `Sui ${L.sui.network ?? ""}`}</span>
         </div>
       </footer>
+
+      <BuySheet service={buying} agents={L.agents} onClose={() => setBuying(null)} onDone={L.done} />
 
       <PurchaseModal
         isOpen={L.purchaseFor !== undefined}
