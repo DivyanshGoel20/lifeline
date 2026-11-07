@@ -1,3 +1,4 @@
+import { chooseFunding, fundBySwap, type FundingDecision } from "./swapOrBorrow";
 import { healthyArcEndpoint } from "./arcRpc";
 import { GatewayClient } from "@circle-fin/x402-batching/client";
 import { ORIGINATION_FEE_RATE } from "./reputationEngine";
@@ -66,6 +67,9 @@ export interface AgentPaymentContext {
 }
 
 export interface LifelinePayResult {
+  /** Why it was swapped or borrowed, for the receipt. */
+  fundingDecision?: FundingDecision;
+  swapTx?: string;
   success: boolean;
   /** How the x402 payment happened, step by step. */
   x402?: X402Trace;
@@ -155,6 +159,8 @@ export class LifelineSigner {
       method?: "GET" | "POST";
       headers?: Record<string, string>;
       body?: any;
+      /** Set on the retry after a swap, so a second shortfall borrows instead of swapping again. */
+      afterSwap?: boolean;
     }
   ): Promise<LifelinePayResult> {
     const method = options?.method ?? "GET";
@@ -371,6 +377,35 @@ export class LifelineSigner {
       // Lifeline's Gateway pays the seller the whole price - so the whole
       // price is what is lent. Booking only the shortfall left Lifeline out
       // of pocket by whatever the agent happened to hold.
+      // Before any loan: is lending even the better deal? An agent holding other tokens
+      // may do better swapping them. A failure at any step here falls back to borrowing.
+      const priceUsd = parseFloat(requestedAmountFormatted);
+      let fundingDecision: FundingDecision | undefined;
+      const swapKey = agentContext.agentPrivateKey || getAgentPrivateKey(agentContext.agentAddress);
+      if (!options?.afterSwap && swapKey) {
+        const chosen = await chooseFunding({
+          agent: agentContext.agentAddress,
+          amountUsd: priceUsd,
+          headroomUsd: getHumanFacilityStats(humanOwner).totalAvailableCredit,
+        });
+        fundingDecision = chosen.decision;
+        if (chosen.decision.choice === "swap" && chosen.quote) {
+          try {
+            const funded = await fundBySwap(swapKey, agentContext.agentAddress, chosen.quote, priceUsd);
+            for (let i = 0; i < 40; i++) {
+              if ((await this.getAgentGatewayBalance(agentContext.agentAddress)).available >= requestedAmount) break;
+              await new Promise((r) => setTimeout(r, 1500));
+            }
+            const paid = await this.pay(url, agentContext, { ...options, afterSwap: true });
+            return { ...paid, fundingDecision: chosen.decision, swapTx: funded.swapTx };
+          } catch (err: any) {
+            const why = String(err?.shortMessage ?? err?.message ?? err).slice(0, 120);
+            console.warn("[swap-or-borrow] Swap failed, borrowing instead:", why);
+            fundingDecision = { ...chosen.decision, choice: "borrow", reason: `Borrowed: the swap did not finish (${why}).` };
+          }
+        }
+      }
+
       // One ledger change at a time for this human: the limit check and the
       // booking below must see, and leave, a ledger nobody else is changing.
       const releaseLedger = await acquireLedgerLock(humanOwner);
@@ -643,6 +678,7 @@ export class LifelineSigner {
           arcTxHash: arcTxHash || undefined,
           arcTxLink: arcTxHash ? arcTxUrl(arcTxHash) : undefined,
           circleSettlementId: settleResponse?.transaction,
+          fundingDecision,
           payer: this.fundingClient.address,
           creditFacilityAddress: this.creditFacilityAddress,
           agentDebt: updatedAgent?.outstandingDebt || shortfallAmount,

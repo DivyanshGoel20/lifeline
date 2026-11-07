@@ -229,6 +229,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
               ${Number(result.amount ?? price).toFixed(3)}
             </span>
           </div>
+          {result.fundingDecision?.reason && <p className="text-[12.5px] ink-2 leading-snug">{result.fundingDecision.reason}</p>}
           <dl className="grid grid-cols-[120px_1fr] gap-y-2.5 mono text-[11px]">
             {Number(result.borrowed ?? 0) > 0 && (
               <>

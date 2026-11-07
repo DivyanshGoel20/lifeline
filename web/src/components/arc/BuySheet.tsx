@@ -74,6 +74,7 @@ export const BuySheet: React.FC<{
             This seller also asks for a wallet sign-in. It may refuse the request even after payment is offered.
           </p>
         )}
+        {result?.fundingDecision?.reason && <p className="text-[12.5px] ink-2 leading-snug">{result.fundingDecision.reason}</p>}
         {result ? (
           <pre className="mono text-[11px] leading-relaxed overflow-auto max-h-64 p-3" style={{ background: "var(--ground-2)" }}>
             {JSON.stringify(result.data ?? result, null, 2)}
