@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/.well-known/lifeline-sector.json", "destination": "https://lifeline-arc.vercel.app/.well-known/lifeline-sector.json" },
+    { "source": "/api/:path*", "destination": "https://lifeline-arc.vercel.app/api/:path*" },
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+  ]
+}
