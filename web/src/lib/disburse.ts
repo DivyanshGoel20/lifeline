@@ -1,5 +1,11 @@
 import { ARC_GATEWAY_CHAIN } from "./arc";
 import { GatewayClient } from "@circle-fin/x402-batching/client";
+import { createPublicClient, parseAbi, parseUnits } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { ARC_USDC_ADDRESS } from "./arc";
+import { getArcTransport, healthyArcEndpoint } from "./arcRpc";
+
+const BALANCE_ABI = parseAbi(["function balanceOf(address) view returns (uint256)"]);
 
 /**
  * Putting money where an agent can actually spend it.
@@ -22,15 +28,27 @@ export async function depositToAgentGateway(
     process.env.PRIVATE_KEY) as `0x${string}`;
   if (!key) throw new Error("Missing LIFELINE_FUNDING_PRIVATE_KEY for disbursement");
 
-  const client = new GatewayClient({ chain: ARC_GATEWAY_CHAIN, privateKey: key });
+  const funder = privateKeyToAccount(key).address;
+  const client = () => new GatewayClient({ chain: ARC_GATEWAY_CHAIN, privateKey: key, rpcUrl: healthyArcEndpoint() });
+  const usdcHeld = () =>
+    createPublicClient({ transport: getArcTransport() }).readContract({ address: ARC_USDC_ADDRESS, abi: BALANCE_ABI, functionName: "balanceOf", args: [funder] });
+  const units = parseUnits(amountUsdc.toFixed(6), 6);
 
-  // depositFor credits the balance to `depositor` rather than to the caller,
-  // so the funds become the agent's spending capacity while the debt stays
-  // recorded against the human.
-  const result: any = await client.depositFor(
-    amountUsdc.toFixed(6),
-    agentAddress as `0x${string}`
-  );
-
-  return { depositTxHash: result?.depositTxHash ?? result?.txHash };
+  // A rate limit can fail this after the deposit already went through, and depositing
+  // again would pay the agent twice. So a retry first checks whether the money left.
+  const before = await usdcHeld();
+  for (let attempt = 1; ; attempt++) {
+    try {
+      // depositFor credits the balance to `depositor` rather than to the caller,
+      // so the funds become the agent's spending capacity while the debt stays
+      // recorded against the human.
+      const result: any = await client().depositFor(amountUsdc.toFixed(6), agentAddress as `0x${string}`);
+      return { depositTxHash: result?.depositTxHash ?? result?.txHash };
+    } catch (err: any) {
+      const text = `${err?.shortMessage ?? ""} ${err?.message ?? ""}`;
+      if (attempt >= 4 || !/limit|429|too long|timeout|fetch failed|network/i.test(text)) throw err;
+      await new Promise((r) => setTimeout(r, attempt * 3000));
+      if (before - (await usdcHeld()) >= units) return {};
+    }
+  }
 }

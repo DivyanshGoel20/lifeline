@@ -1,3 +1,4 @@
+import { healthyArcEndpoint } from "./arcRpc";
 import { GatewayClient } from "@circle-fin/x402-batching/client";
 import { ORIGINATION_FEE_RATE } from "./reputationEngine";
 import { approvalCovers, capHoldVerdict } from "./spendingCap";
@@ -118,6 +119,7 @@ export class LifelineSigner {
     this.fundingClient = new GatewayClient({
       chain: options?.chain || ARC_GATEWAY_CHAIN,
       privateKey: this.fundingPrivateKey,
+      rpcUrl: healthyArcEndpoint(),
     });
   }
 

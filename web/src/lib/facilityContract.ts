@@ -1,7 +1,6 @@
 import {
   createPublicClient,
   createWalletClient,
-  http,
   defineChain,
   keccak256,
   encodePacked,
@@ -15,6 +14,7 @@ import { depositToAgentGateway } from "./disburse";
 import { refHash } from "./paymentRef";
 import { ARC_TREASURY } from "./browserChain";
 import { collateralCreditUsd } from "./collateralStore";
+import { getArcTransport } from "./arcRpc";
 import { CREDIT_TIERS } from "./reputationEngine";
 
 export const arcTestnetChain = defineChain({
@@ -243,51 +243,7 @@ export const LIFELINE_CREDIT_FACILITY_ABI = [
   },
 ] as const;
 
-export function getArcTransport() {
-  const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-    let attempts = 0;
-    const maxAttempts = 6;
-    while (attempts < maxAttempts) {
-      attempts++;
-      try {
-        const response = await fetch(input, init);
-        if (response.status === 429 || response.status === 503) {
-          const delay = attempts * 1200 + Math.floor(Math.random() * 500);
-          console.warn(`[ArcTransport] RPC status ${response.status}. Backing off ${delay}ms (attempt ${attempts}/${maxAttempts})...`);
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          continue;
-        }
-
-        const clone = response.clone();
-        const text = await clone.text().catch(() => "");
-        if (
-          text.includes("Request exceeds defined limit") ||
-          text.includes("rate limit") ||
-          text.includes("limit exceeded") ||
-          text.includes("Too Many Requests")
-        ) {
-          const delay = attempts * 1500 + Math.floor(Math.random() * 500);
-          console.warn(`[ArcTransport] RPC throttled: "${text.substring(0, 80)}". Backing off ${delay}ms (attempt ${attempts}/${maxAttempts})...`);
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          continue;
-        }
-
-        return response;
-      } catch (err: any) {
-        if (attempts >= maxAttempts) throw err;
-        const delay = attempts * 1000;
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-    }
-    return fetch(input, init);
-  };
-
-  return http(ARC_RPC_URL, {
-    fetchFn: customFetch,
-    retryCount: 5,
-    retryDelay: 1500,
-  });
-}
+export { getArcTransport };
 
 /**
  * Confirms a repayment the browser says it made.
@@ -527,19 +483,28 @@ export async function executeOnChainDrawdown(params: {
 
       let reversed = false;
       try {
-        const unwind = await walletClient.writeContract({
-          address: LIFELINE_CREDIT_FACILITY_ADDRESS,
-          abi: LIFELINE_CREDIT_FACILITY_ABI,
-          functionName: "recordRepayment",
-          args: [
-            profileId,
-            params.agentAddress as `0x${string}`,
-            params.agentAddress as `0x${string}`,
-            amountUnits,
-          ],
-        });
-        await publicClient.waitForTransactionReceipt({ hash: unwind });
-        reversed = true;
+        // Giving up here leaves a debt for money never received, so it is worth persisting.
+        for (let attempt = 1; ; attempt++) {
+          try {
+            const unwind = await walletClient.writeContract({
+              address: LIFELINE_CREDIT_FACILITY_ADDRESS,
+              abi: LIFELINE_CREDIT_FACILITY_ABI,
+              functionName: "recordRepayment",
+              args: [
+                profileId,
+                params.agentAddress as `0x${string}`,
+                params.agentAddress as `0x${string}`,
+                amountUnits,
+              ],
+            });
+            await publicClient.waitForTransactionReceipt({ hash: unwind });
+            reversed = true;
+            break;
+          } catch (err) {
+            if (attempt >= 4) throw err;
+            await new Promise((r) => setTimeout(r, attempt * 3000));
+          }
+        }
       } catch (unwindErr: any) {
         // Both legs failed: say so loudly, with the tx to reconcile against.
         throw new Error(

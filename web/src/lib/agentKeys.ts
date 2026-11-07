@@ -2,10 +2,10 @@ import fs from "./storeFs";
 import path from "path";
 import crypto from "node:crypto";
 import { privateKeyToAccount } from "viem/accounts";
-import { createWalletClient, http } from "viem";
+import { createWalletClient } from "viem";
 import { writeJsonAtomic } from "./atomicWrite";
 import { arcTestnetChain } from "./facilityContract";
-import { ARC_RPC_URL } from "./arc";
+import { getArcTransport } from "./arcRpc";
 
 /**
  * Custody of agent signing keys.
@@ -324,6 +324,6 @@ export function getAgentWalletClient(address: string) {
   return createWalletClient({
     account,
     chain: arcTestnetChain,
-    transport: http(ARC_RPC_URL),
+    transport: getArcTransport(),
   });
 }
