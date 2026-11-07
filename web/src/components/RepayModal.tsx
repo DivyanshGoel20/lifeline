@@ -4,11 +4,12 @@ import React, { useEffect, useState } from "react";
 import { Agent, Rail } from "@/types";
 import { Sheet, Field, ErrorNote } from "./Sheet";
 import { CardRepay } from "./CardRepay";
+import { swapAndBridge } from "@/lib/tokenRepay";
 import { useWallet } from "@/lib/useWallet";
 
-type Method = "agent" | "wallet" | "card";
+type Method = "agent" | "wallet" | "token" | "card";
 const UNBOOKED_KEY = "lifeline_unbooked_repayment";
-const METHOD_NAMES: Record<Method, string> = { agent: "Agent's wallet", wallet: "Your wallet", card: "Apple Pay · Google Pay" };
+const METHOD_NAMES: Record<Method, string> = { agent: "Agent's wallet", wallet: "Your wallet", token: "Any token", card: "Apple Pay · Google Pay" };
 
 interface RepayModalProps {
   isOpen: boolean;
@@ -66,10 +67,23 @@ export const RepayModal: React.FC<RepayModalProps> = ({ isOpen, onClose, rail, a
       .catch(() => setCard(null));
   }, []);
 
+  // Repaying in any token: what Uniswap can swap, and how far along it is.
+  const [swap, setSwap] = useState<{ configured: boolean; tokens: string[]; chainName: string } | null>(null);
+  const [token, setToken] = useState("ETH");
+  const [swapStep, setSwapStep] = useState<string | null>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/uniswap/repay", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setSwap)
+      .catch(() => setSwap(null));
+  }, [isOpen]);
+
   const selected = owing.find((a) => a.address === agentAddress);
   const methods: Method[] = [
     ...(selected?.isAutonomous ? (["agent"] as const) : []),
     ...(wallet.available ? (["wallet"] as const) : []),
+    ...(wallet.available && swap?.configured ? (["token"] as const) : []),
     ...(card?.enabled ? (["card"] as const) : []),
   ];
   // Keep a method that applies to the agent in hand.
@@ -137,8 +151,8 @@ export const RepayModal: React.FC<RepayModalProps> = ({ isOpen, onClose, rail, a
     const value = parseFloat(amount) || 0;
     if (!agentAddress || value <= 0) return;
     if (method === "card") return setPaying(true);
-    if (method === "wallet" && !wallet.address && !unbooked) return wallet.connect();
-    if (method === "wallet" && !unbooked && value > arcOwed + 0.01) {
+    if ((method === "wallet" || method === "token") && !wallet.address && !unbooked) return wallet.connect();
+    if ((method === "wallet" || method === "token") && !unbooked && value > arcOwed + 0.01) {
       return setError(`That is more than is owed ($${arcOwed.toFixed(2)}). The excess would not come back.`);
     }
     setBusy("arc");
@@ -152,6 +166,16 @@ export const RepayModal: React.FC<RepayModalProps> = ({ isOpen, onClose, rail, a
         const txHash = await wallet.payTreasury(value);
         pending = { txHash, amount: value, agentAddress };
         keepUnbooked(pending);
+      }
+      if (method === "token") {
+        // Swapped and bridged into the person's own wallet, then paid like any wallet
+        // repayment, so it passes the same check before anything is booked.
+        await swapAndBridge({ eth: wallet.provider()!, wallet: wallet.address!, token, amountUsd: value, post, onStep: setSwapStep });
+        setSwapStep("Pay the treasury from your wallet…");
+        const txHash = await wallet.payTreasury(value);
+        pending = { txHash, amount: value, agentAddress };
+        keepUnbooked(pending);
+        setSwapStep(null);
       }
       const data = await post("/api/repay", {
         agentAddress: pending?.agentAddress ?? agentAddress,
@@ -231,6 +255,8 @@ export const RepayModal: React.FC<RepayModalProps> = ({ isOpen, onClose, rail, a
               <p className="text-[13px] ink-2 leading-relaxed">
                 {method === "agent"
                   ? "The agent pays from its own Arc wallet; the facility books it."
+                  : method === "token"
+                    ? `Pay from ${swap?.tokens.join(", ") ?? "other tokens"} on ${swap?.chainName ?? "another chain"}. Uniswap swaps it to USDC and Circle bridges that to Arc. You confirm each step in your wallet, and it takes a minute or two.`
                   : method === "wallet"
                     ? wallet.address
                       ? `From ${wallet.address.slice(0, 6)}…${wallet.address.slice(-4)}: USDC goes to Lifeline's treasury on Arc, and once the chain confirms it the facility books the repayment.`
@@ -255,12 +281,22 @@ export const RepayModal: React.FC<RepayModalProps> = ({ isOpen, onClose, rail, a
                 ))}
               </select>
             </Field>
+            {method === "token" && (
+              <Field label="Pay with">
+                <select className="field" value={token} onChange={(e) => setToken(e.target.value)}>
+                  {swap?.tokens.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </Field>
+            )}
+            {swapStep && <p className="mono text-[11px] ink-2">{swapStep}</p>}
             <Field label="Amount" hint={method === "card" ? "USD" : "USDC"}>
               <input
                 type="number"
                 step="0.01"
                 min="0.01"
-                max={method === "wallet" ? Math.ceil(arcOwed * 100) / 100 : undefined}
+                max={method === "wallet" || method === "token" ? Math.ceil(arcOwed * 100) / 100 : undefined}
                 className="field"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -279,14 +315,14 @@ export const RepayModal: React.FC<RepayModalProps> = ({ isOpen, onClose, rail, a
               </button>
               <button type="submit" disabled={!!busy || wallet.connecting || methods.length === 0} className="btn btn-solid">
                 {busy
-                  ? method === "wallet"
+                  ? method === "wallet" || method === "token"
                     ? "Confirm in your wallet…"
                     : "Settling on Arc…"
                   : method === "wallet" && unbooked
                     ? "Book the transfer already sent"
                   : method === "card"
                     ? "Continue to pay"
-                    : method === "wallet" && !wallet.address
+                    : (method === "wallet" || method === "token") && !wallet.address
                       ? wallet.connecting
                         ? "Connecting…"
                         : "Connect wallet"

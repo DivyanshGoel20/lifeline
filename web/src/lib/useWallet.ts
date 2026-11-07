@@ -47,6 +47,8 @@ export type Wallet = {
   sendCalls: (calls: { to: string; data: string }[]) => Promise<`0x${string}`[]>;
   /** Sign a plain text message with the connected wallet. */
   signMessage: (message: string) => Promise<`0x${string}`>;
+  /** The provider itself, for libraries that drive the wallet directly. */
+  provider: () => Eip1193 | null;
 };
 
 export function useWallet(): Wallet {
@@ -196,5 +198,6 @@ export function useWallet(): Wallet {
     payTreasury,
     sendCalls,
     signMessage,
+    provider,
   };
 }
