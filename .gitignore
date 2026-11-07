@@ -61,3 +61,4 @@ data/*.json
 .vercel
 premium-api/api/
 sui/api/
+.arc-studio/

@@ -5,6 +5,20 @@ in the demo.
 
 **Project:** https://studio.arc.io/app/db053ebe-5c54-478f-a695-2ea57b95a171
 
+**Share link:** https://studio.arc.io/share/arc-lifeline-credit-contract-builder-9dk7348o2w
+
+## What the Studio project is
+
+The Studio project runs Lifeline's real interface. `scripts/sync-studio.mjs` copies the product's own
+page and component files into it, unchanged. Next.js pieces are replaced by small shims in `studio/`, because
+Studio's app is Vite. Its `/api` calls go to the same backend, at https://lifeline-arc.vercel.app.
+
+So the interface is the same product in both places, but not all of it was written in Studio:
+
+- **Built in Studio:** the vault and pool contracts, their tests and review, and their deployment.
+- **Built outside and brought in:** most of the interface and everything from before the event.
+- **Not in Studio:** the backend, which runs on Vercel, because Studio's app has no server.
+
 ## What was built there
 
 | Studio turn | Prompt | Result |

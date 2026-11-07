@@ -40,15 +40,14 @@ const copy = (from, to) => {
   fs.copyFileSync(from, to);
   copied.push(path.relative(out, to));
 };
-for (const f of new Set([...own, path.join(web, "src/app/globals.css")])) copy(f, path.join(out, path.relative(web, f)));
+// Type-only imports leave no trace in a bundle, so the shared types are named here.
+for (const f of new Set([...own, path.join(web, "src/app/globals.css"), path.join(web, "src/types/index.ts")].filter((f) => fs.existsSync(f)))) copy(f, path.join(out, path.relative(web, f)));
 copy(path.join(root, "studio/App.tsx"), path.join(out, "src/App.tsx"));
 copy(path.join(root, "studio/shims/next-dynamic.tsx"), path.join(out, "src/shims/next-dynamic.tsx"));
 copy(path.join(root, "studio/shims/next-navigation.ts"), path.join(out, "src/shims/next-navigation.ts"));
 copy(path.join(root, "studio/vercel.json"), path.join(out, "vercel.json"));
 if (fs.existsSync(path.join(web, "public/icon.svg"))) copy(path.join(web, "public/icon.svg"), path.join(out, "public/icon.svg"));
 
-fs.writeFileSync(path.join(out, ".lifeline-synced-files"), copied.sort().join("\n") + "\n");
-console.log(`Copied ${copied.length} files to ${out}`);
 
 // Studio's own shell stays (its wallet providers and "Built with Arc Studio" mark). It only
 // needs to load Lifeline's styles and providers, and its dependencies.
@@ -57,19 +56,21 @@ const edit = (rel, fn) => {
   const p = path.join(out, rel);
   if (fs.existsSync(p)) fs.writeFileSync(p, fn(fs.readFileSync(p, "utf8")));
 };
+// Safe to run again: a project that already has these is left alone.
 edit("src/main.tsx", (s) =>
-  s
-    .replace("import './lifeline/globals.css'", "import '@/app/globals.css'")
-    .replace("import App from './App'", "import App from './App'\nimport LifelineProviders from '@/app/providers'")
-    .replace("<App />", "<LifelineProviders><App /></LifelineProviders>")
+  s.includes("LifelineProviders")
+    ? s
+    : s
+        .replace("import './lifeline/globals.css'", "import '@/app/globals.css'")
+        .replace("import App from './App'", "import App from './App'\nimport LifelineProviders from '@/app/providers'")
+        .replace("<App />", "<LifelineProviders><App /></LifelineProviders>")
 );
 edit("index.html", (s) =>
   s
     .replace(/<title>.*<\/title>/, "<title>Lifeline - credit for agents, on a human's pulse</title>")
     .replace(/family=Hanken\+Grotesk[^"]*"/, 'family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600&family=Martian+Mono:wght@300;400;500&display=swap"')
-    .replace("<body>", '<body class="strip">')
+    .replace(/<body[^>]*>/, '<body class="strip">')
 );
-edit("tailwind.config.js", (s) => s);
 const webPkg = JSON.parse(fs.readFileSync(path.join(web, "package.json"), "utf8"));
 edit("package.json", (s) => {
   const pkg = JSON.parse(s);
@@ -79,3 +80,6 @@ edit("package.json", (s) => {
   pkg.devDependencies["@types/qrcode"] = webPkg.devDependencies["@types/qrcode"];
   return JSON.stringify(pkg, null, 2) + "\n";
 });
+
+fs.writeFileSync(path.join(out, ".lifeline-synced-files"), copied.sort().join("\n") + "\n");
+console.log(`Copied ${copied.length} files to ${out}`);
