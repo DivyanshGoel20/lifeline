@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import { bridgeFromWallet } from "@/lib/tokenRepay";
 import { describeError, parseAmount, postJson, shortAddress, usd } from "./api";
+import type { Wallet } from "./wallet";
 import { ErrorNote, Field, Note, Section } from "./ui";
 
 const CHAINS: { id: string; name: string }[] = [
@@ -14,9 +16,13 @@ type Step = { name: string; state: string; txHash?: string };
 type Result = { success: boolean; bridgedUsd: number; repaidUsd: number; steps: Step[]; error?: string };
 
 export const CrossChainRepay: React.FC<{
+  wallet: Wallet & { provider: () => any; payTreasury: (usd: number) => Promise<string> };
   agents: { address: string; name: string }[];
   onChanged: (message: string) => void;
-}> = ({ agents, onChanged }) => {
+}> = ({ wallet, agents, onChanged }) => {
+  // Whose money: yours, in the wallet you connect, or what the agent holds there.
+  const [source, setSource] = useState<"wallet" | "agent">("wallet");
+  const [step, setStep] = useState<string | null>(null);
   const [agent, setAgent] = useState("");
   const [chain, setChain] = useState(CHAINS[0].id);
   const [amount, setAmount] = useState("");
@@ -33,6 +39,29 @@ export const CrossChainRepay: React.FC<{
     setBusy(true);
     setProblem(null);
     setResult(null);
+    if (source === "wallet") {
+      try {
+        if (!wallet.address) {
+          await wallet.connect();
+          return;
+        }
+        const { arrivedUsd, steps } = await bridgeFromWallet({ eth: wallet.provider(), wallet: wallet.address, fromChain: chain, amountUsd, onStep: setStep });
+        setStep("Pay the treasury from your wallet…");
+        const txHash = await wallet.payTreasury(arrivedUsd);
+        setStep("Booking the repayment…");
+        const booked = await postJson<{ amount: number }>("/api/repay", { agentAddress: chosen, amount: arrivedUsd, txHash });
+        const repaid = Number(booked.amount ?? arrivedUsd);
+        setResult({ success: true, bridgedUsd: arrivedUsd, repaidUsd: repaid, steps });
+        onChanged(`Repaid ${usd(repaid)} from ${CHAINS.find((c) => c.id === chain)?.name ?? chain}.`);
+        setAmount("");
+      } catch (e) {
+        setProblem(describeError(e));
+      } finally {
+        setStep(null);
+        setBusy(false);
+      }
+      return;
+    }
     try {
       const r = await postJson<Result>("/api/repay/crosschain", {
         agentAddress: chosen,
@@ -57,8 +86,14 @@ export const CrossChainRepay: React.FC<{
         <Note>There are no agents to repay for yet.</Note>
       ) : (
         <>
+          <Field label="Pay from">
+            <select className="field" value={source} onChange={(e) => setSource(e.target.value as "wallet" | "agent")} disabled={busy}>
+              <option value="wallet">{wallet.address ? `Your wallet · ${shortAddress(wallet.address)}` : "Your wallet"}</option>
+              <option value="agent">The agent&apos;s wallet</option>
+            </select>
+          </Field>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Agent">
+            <Field label="Debt of">
               <select className="field" value={chosen} onChange={(e) => setAgent(e.target.value)} disabled={busy}>
                 {agents.map((a) => (
                   <option key={a.address} value={a.address}>
@@ -88,17 +123,20 @@ export const CrossChainRepay: React.FC<{
             />
           </Field>
           <Note>
-            The agent needs this much USDC, plus gas, on the chain you pick. Lifeline bridges it to Arc and repays the
-            debt. This can take a few minutes.
+            {source === "wallet"
+              ? "Your wallet needs this much USDC and a little ETH for gas on the chain you pick, and a little USDC on Arc for gas. You confirm each step."
+              : "The agent's own wallet needs this much USDC, plus ETH for gas, on the chain you pick. Lifeline signs for it."}{" "}
+            Circle bridges it to Arc and the debt is repaid. It usually takes under a minute.
           </Note>
           <div className="flex justify-end">
             <button className="btn btn-solid" disabled={busy} onClick={() => void submit()}>
-              {busy ? "Bridging and repaying…" : "Repay"}
+              {busy ? "Bridging and repaying…" : source === "wallet" && !wallet.address ? "Connect wallet" : "Repay"}
             </button>
           </div>
         </>
       )}
 
+      {step ? <p className="mono text-[11px] ink-2">{step}</p> : null}
       {problem ? <ErrorNote>{problem}</ErrorNote> : null}
 
       {result ? (

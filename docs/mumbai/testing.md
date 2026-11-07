@@ -35,7 +35,7 @@ https://explorer.testnet.whitechain.io.
 11. **Deposit:** in **Deposit-backed credit**, connect, **Use this wallet**, sign, enter 1, **Deposit**, approve two transactions. Expect Line $1.30 at the top.
 12. **Withdraw:** enter 0.2, **Request withdrawal**. Expect 59 minutes left and Line $1.14. **Cancel** returns it to $1.30.
 13. **Lend:** in **Lending pool**, enter 0.5, **Deposit**, approve two transactions. Expect "Your deposit $0.50" and an unlock time a day later. The pool's totals include earlier tests.
-14. **Bridge Kit:** owe something first. Copy the agent's address from its lead and send it 1 USDC and 0.005 ETH on Base Sepolia, plus 0.1 USDC on Arc for gas. In **Repay from another chain**, choose Base Sepolia, enter 0.25, and submit. Expect it to finish in under a minute, with the debt down. Any excess stays in the agent's wallet.
+14. **Bridge Kit:** owe something first. Your wallet needs USDC and a little ETH on Base Sepolia, and a little USDC on Arc for gas. In **Repay from another chain**, keep **Your wallet**, choose Base Sepolia, enter the amount, and confirm each step. Expect it to finish in about a minute, with the debt down.
 
 ## Whitechain
 **Needs test USDT in the operator wallet** `0x5233E4253bC38e8CF517c0768dbC8aCC886F32B3`. Until then, buying fails with `insufficient_funds`.
@@ -46,7 +46,6 @@ https://explorer.testnet.whitechain.io.
 18. **Merchant:** at `/whitechain/merchant`, expect those payments with links, and what the gas cost.
 
 ## Last checks
-19. **Lending limits:** new credit today rises as you borrow.
 20. **Repay in any token:** shows "Not live yet", which is correct.
 21. **Sui:** `/sui` opens with its own $0.50 line.
 22. **Mini app:** open in World App and sign in. Expect the same account.

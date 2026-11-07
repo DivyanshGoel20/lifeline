@@ -1,10 +1,16 @@
 # Whitechain: credit and gasless USDT payments for agents
 
-**Status: deployed and verified on Whitechain Sepolia. The flow is tested against a local copy of the
-chain with the real USDT. The first live payment is waiting on test USDT.**
+**Status: live on Whitechain Sepolia, with real USDT payments. Testnet tokens only.**
 
 - Credit facility: [`0xaa2d23bac7b6f9b4ca2737252f924b3f485e0686`](https://explorer.testnet.whitechain.io/address/0xaa2d23bac7b6f9b4ca2737252f924b3f485e0686), verified.
 - Deployment: [`0x609288cc…6bbc`](https://explorer.testnet.whitechain.io/tx/0x609288ccb9372849563a8f0239ac3b8bb8edefe55447fa48df21bfb7f8596bbc).
+
+- Paid in USDT by Lifeline on credit: [`0xcef96718…de4b`](https://explorer.testnet.whitechain.io/tx/0xcef967183f062644d1c46ee2798893e876844902d0f278b02da65ee1c7bcde4b)
+- Drawdown recorded on the facility: [`0x0a704e5d…4512`](https://explorer.testnet.whitechain.io/tx/0x0a704e5da6108615785da4002d606d8468ccddb0aaa7d7d74730be4baf654512)
+- Repaid with a signature, gas paid by the relayer: [`0xb10667cf…8514`](https://explorer.testnet.whitechain.io/tx/0xb10667cf957f5e9b65a3d08376b64522a0c00da212cc79b2a3ae96e2ff2c8514)
+- An agent holding no WBT paying for itself: [`0x75e782e3…2417`](https://explorer.testnet.whitechain.io/tx/0x75e782e3fb71d41e6037e05f683aeb2dd74ae0c5373ea13249e4b9fcc9c42417)
+
+Run it again with `npm run e2e:whitechain`.
 
 **Bounties:** Continuity: Bring Your Product to Whitechain. Payments Nobody Notices.
 
@@ -116,6 +122,5 @@ npm run e2e:whitechain-fork
 ## Before submitting
 
 - [x] Deployed and verified (links above).
-- [ ] Test USDT for the operator wallet.
-- [ ] One real USDT payment, and its explorer link here.
+- [x] Real USDT payments, with explorer links above.
 - [ ] A 2 to 4 minute video showing the human, the agent and the merchant.
