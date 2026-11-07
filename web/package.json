@@ -19,7 +19,8 @@
     "e2e:secured": "tsx --env-file-if-exists=../.env test/e2e/secured.e2e.ts",
     "e2e:jar": "tsx test/e2e/jar.fork.e2e.ts",
     "e2e:uniswap": "tsx --env-file-if-exists=../.env test/e2e/uniswap.fork.e2e.ts",
-    "e2e:whitechain-fork": "tsx test/e2e/whitechain.fork.e2e.ts"
+    "e2e:whitechain-fork": "tsx test/e2e/whitechain.fork.e2e.ts",
+    "e2e:whitechain": "tsx --env-file-if-exists=../.env test/e2e/whitechain.live.e2e.ts"
   },
   "dependencies": {
     "@circle-fin/adapter-viem-v2": "^1.20.1",
