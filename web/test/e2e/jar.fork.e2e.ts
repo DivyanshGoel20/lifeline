@@ -117,6 +117,7 @@ async function main() {
   check("the jar and releaser exist", !!jar && !!releaser, `${jar} ${releaser}`);
   process.env.LIFELINE_JAR_ADDRESS = jar;
   process.env.LIFELINE_JAR_RELEASER_ADDRESS = releaser;
+  process.env.LIFELINE_JAR_REPAYMENTS = "on";
 
   // Imported late: the module's clients read the environment set above.
   const { clearJar, jarSummary, quoteCredit, repayWithToken } = await import("../../src/lib/lifelineJar");

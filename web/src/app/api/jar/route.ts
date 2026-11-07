@@ -2,28 +2,38 @@ import { NextRequest, NextResponse } from "next/server";
 import { unauthenticated } from "@/lib/session";
 import { hasCredential, resolveSpender } from "@/lib/agentToken";
 import { getAgentByAddress } from "@/lib/agentStore";
-import { isJarToken, JAR_TOKENS, jarConfigured, jarSummary, quoteCredit, repayWithToken } from "@/lib/lifelineJar";
+import { isJarToken, JAR_TOKENS, jarContracts, jarSummary, quoteCredit, repayWithToken } from "@/lib/lifelineJar";
 import { invalidateTelemetryCache } from "@/lib/telemetryCache";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
+
+/** Every open dashboard reads this, and Base's public RPC limits how often it can be asked. */
+const FRESH_MS = 30_000;
+let lastRead: { at: number; summary: Awaited<ReturnType<typeof jarSummary>> } | null = null;
 
 /** The Token Jar: what is in it, or what an amount of a token would pay off. Public. */
 export async function GET(req: NextRequest) {
   const p = new URL(req.url).searchParams;
   const token = p.get("token");
   const amount = p.get("amount");
-  try {
-    if (token || amount) {
-      if (!jarConfigured()) return NextResponse.json({ configured: false });
-      if (!isJarToken(token) || !amount) {
-        return NextResponse.json({ error: `token must be one of ${Object.keys(JAR_TOKENS).join(", ")}, with an amount.` }, { status: 400 });
-      }
-      return NextResponse.json({ configured: true, ...(await quoteCredit(token, amount)) });
+  const supported = Object.keys(JAR_TOKENS);
+  if (token || amount) {
+    if (!isJarToken(token) || !amount || !/^\d+(\.\d+)?$/.test(amount)) {
+      return NextResponse.json({ error: `token must be one of ${supported.join(", ")}, with an amount.` }, { status: 400 });
     }
-    return NextResponse.json({ supported: Object.keys(JAR_TOKENS), ...(await jarSummary()) });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.shortMessage ?? err?.message ?? "Could not read the jar" }, { status: 502 });
+    try {
+      return NextResponse.json(await quoteCredit(token, amount));
+    } catch (err: any) {
+      return NextResponse.json({ error: err?.shortMessage ?? err?.message ?? "Could not price that" }, { status: 502 });
+    }
+  }
+  if (lastRead && Date.now() - lastRead.at < FRESH_MS) return NextResponse.json({ supported, ...lastRead.summary });
+  try {
+    lastRead = { at: Date.now(), summary: await jarSummary() };
+    return NextResponse.json({ supported, ...lastRead.summary });
+  } catch {
+    return NextResponse.json({ supported, ...jarContracts() });
   }
 }
 

@@ -4,7 +4,7 @@ import { getAllAgents } from "@/lib/agentStore";
 import { enforceStanding, standingHumans } from "@/lib/standing";
 import { reconcileSui, suiConfigured } from "@/lib/suiRail";
 import { seizeCollateral, vaultAddress } from "@/lib/securedLine";
-import { clearJar, jarConfigured } from "@/lib/lifelineJar";
+import { clearJar, jarOpen } from "@/lib/lifelineJar";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
   }
   // Worth clearing? Failing here must not lose the sweep's report.
-  const jar = jarConfigured() ? await clearJar().catch((err) => ({ cleared: false, error: String(err?.message ?? err) })) : undefined;
+  const jar = jarOpen() ? await clearJar().catch((err) => ({ cleared: false, error: String(err?.message ?? err) })) : undefined;
   return NextResponse.json({ jar, checked: humans.size, notGood: changed, seized, sui });
 }
 

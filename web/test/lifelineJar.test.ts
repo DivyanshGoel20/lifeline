@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { useSandbox } from "./sandbox";
-import { jarConfigured, repayWithToken } from "../src/lib/lifelineJar";
+import { clearJar, jarContracts, jarOpen, repayWithToken } from "../src/lib/lifelineJar";
 
 /** The rules around a token repayment. The real chain is in test/e2e/jar.fork.e2e.ts. */
 const dir = useSandbox();
@@ -16,7 +16,7 @@ let sent: bigint[];
 let booked: number[];
 function deps(over: Record<string, unknown> = {}) {
   return {
-    configured: () => true,
+    open: () => true,
     key: () => "0xkey",
     allow: () => ({ ok: true }),
     owed: async () => 3,
@@ -33,10 +33,21 @@ beforeEach(() => {
   for (const f of fs.readdirSync(path.join(dir, "data"))) fs.rmSync(path.join(dir, "data", f), { force: true });
 });
 
-test("off until the jar's addresses are set", async () => {
+test("no token moves and nothing clears until repayments are opened", async () => {
+  delete process.env.LIFELINE_JAR_REPAYMENTS;
+  assert.equal(jarOpen(), false);
+  await assert.rejects(repayWithToken(base, deps({ open: jarOpen })), /opens when credit moves/);
+  assert.equal(sent.length, 0);
+  assert.deepEqual(await clearJar(), { cleared: false, reason: "Clearing opens with repayments." });
+});
+
+test("the deployed contracts are named without any setting", () => {
   delete process.env.LIFELINE_JAR_ADDRESS;
-  assert.equal(jarConfigured(), false);
-  await assert.rejects(repayWithToken(base, deps({ configured: jarConfigured })), /not set up/);
+  delete process.env.LIFELINE_JAR_RELEASER_ADDRESS;
+  const { jar, releaser, open } = jarContracts();
+  assert.equal(jar, "0x9282BCCAda9C009CCC4c80e52a0A02b342fc0e8B");
+  assert.equal(releaser, "0xa64688229151023Ca2b2f9B3eFe9FB9f2899A2Bc");
+  assert.equal(open, false);
 });
 
 test("the debt falls by the token's worth less the margin, and the token moves first", async () => {

@@ -46,7 +46,7 @@ https://explorer.testnet.whitechain.io.
 18. **Merchant:** at `/whitechain/merchant`, expect those payments with links, and what the gas cost.
 
 ## Last checks
-20. **Repay in any token:** shows "Not switched on yet", with a link to the deployed jar.
+20. **Repay in any token:** shows the jar's balance, what it clears at and how many times it has cleared, read from Base mainnet, with links to both contracts. Enter 0.001 WETH to see a live Uniswap price. Sending opens when credit moves to Arc mainnet.
 21. **Sui:** `/sui` opens with its own $0.50 line.
 22. **Mini app:** open in World App and sign in. Expect the same account.
 
@@ -63,4 +63,4 @@ npm run e2e:standing         # late and defaulted loans
 - **$1 and $2 tiers:** these need 7 and 14 days of history.
 - **Late loans and defaults:** loans last 7 days. Use `e2e:standing` and `e2e:secured`.
 - **Finishing a withdrawal:** the vault waits an hour and the pool a day.
-- **Tokens through the Token Jar:** it is deployed on Base mainnet but switched off, so use `e2e:jar`.
+- **Sending tokens to the Token Jar:** those are real tokens on Base mainnet, so use `e2e:jar`, which runs the whole flow on a copy of Base.

@@ -1,7 +1,7 @@
 # Uniswap: repay in any token
 
-**Status: the Token Jar is deployed on Base mainnet, through Uniswap's real TJAR factory. It is not switched on in
-the app, and no tokens have gone through it. The full flow is tested on a local fork of Base.**
+**The Lifeline Token Jar is live on Base mainnet, deployed through Uniswap's TJAR factory.** The dashboard reads it
+from the chain and prices tokens with real Uniswap quotes.
 
 | Contract | Address |
 |---|---|
@@ -11,8 +11,10 @@ the app, and no tokens have gone through it. The full flow is tested on a local 
 
 Read back from the chain: clearing costs 5 USDC, which goes to `0x5233…32B3`, also the owner of both.
 
-**Why it is off:** credit is still on Arc testnet, and tokens sent to a jar cannot come back. An agent would pay real
-tokens to clear a testnet debt, and the USDC could not bridge from Base mainnet to Arc testnet.
+**Where it stands:** sending tokens opens when credit moves to Arc mainnet, so the jar holds nothing and has not been
+cleared yet. Credit is on Arc testnet, and tokens sent to a jar cannot come back: an agent would pay real tokens to
+clear a testnet debt, and the USDC could not bridge from Base mainnet to Arc testnet. The whole flow, including sending
+and clearing, passes on a local fork of Base with the factory's real code.
 
 ## The problem and the idea
 
@@ -84,21 +86,18 @@ transaction is expensive, and the limit above caps the gain, but this is not an 
 
 ## Going to mainnet
 
-Nothing here has been run on mainnet. The steps are:
+The jar is already on Base mainnet, and its addresses are built in. What remains:
 
-1. **Decide where Lifeline runs.** Base mainnet's USDC can only bridge to **Arc mainnet**. With the
-   jar on Base mainnet and credit on Arc testnet, repayments would book but `bridgeProceedsToArc`
-   has nowhere to send real money. A complete run needs the facility, vault and pool on Arc mainnet too.
+1. **Move credit to Arc mainnet.** Base mainnet's USDC can only bridge to Arc mainnet, so the facility,
+   vault and pool go there too. See [mainnet.md](mainnet.md).
 2. **Fund a keeper** on Base with ETH for gas and USDC for the threshold.
-3. **The jar is already deployed** (above). Only the keeper funding and these settings remain.
-4. **Set** `LIFELINE_JAR_ADDRESS`, `LIFELINE_JAR_RELEASER_ADDRESS`, `BASE_RPC_URL` and
-   `LIFELINE_JAR_KEEPER_KEY`. The feature stays off until the two addresses are set.
-5. **Test with a dollar** before anything larger. Agents also need ETH on Base for gas.
+3. **Set** `LIFELINE_JAR_REPAYMENTS=on`, `BASE_RPC_URL` and `LIFELINE_JAR_KEEPER_KEY`.
+4. **Test with a dollar** before anything larger. Agents also need ETH on Base for gas.
 
 ## Not tested
 
-- Tokens through the deployed jar, or clearing it, on real mainnet. Only its deployment and settings are confirmed.
+- Sending a token to the deployed jar, or clearing it, on mainnet. Its deployment, settings and live prices are confirmed.
 - `bridgeProceedsToArc`: a bridge cannot leave a fork.
 - The route booking on a live Arc facility with a real token. The fork test stands in for that one step,
   which uses the same booking path as a card repayment.
-- The screen with the jar turned on: until deployment it shows "Not live yet".
+- The Repay button on the dashboard, which appears once repayments are open.

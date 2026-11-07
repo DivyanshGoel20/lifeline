@@ -75,9 +75,16 @@ export const jarLimits = () => ({
   slippageBps: envNumber("LIFELINE_JAR_SLIPPAGE_BPS", 100),
 });
 
-const jarAddress = () => (process.env.LIFELINE_JAR_ADDRESS || null) as `0x${string}` | null;
-const releaserAddress = () => (process.env.LIFELINE_JAR_RELEASER_ADDRESS || null) as `0x${string}` | null;
-export const jarConfigured = () => Boolean(jarAddress() && releaserAddress());
+/** Lifeline's contracts on Base mainnet, deployed through Uniswap's factory. A fork test names its own. */
+const DEPLOYED_JAR = "0x9282BCCAda9C009CCC4c80e52a0A02b342fc0e8B";
+const DEPLOYED_RELEASER = "0xa64688229151023Ca2b2f9B3eFe9FB9f2899A2Bc";
+const jarAddress = () => (process.env.LIFELINE_JAR_ADDRESS || DEPLOYED_JAR) as `0x${string}`;
+const releaserAddress = () => (process.env.LIFELINE_JAR_RELEASER_ADDRESS || DEPLOYED_RELEASER) as `0x${string}`;
+/**
+ * Whether Lifeline sends tokens to the jar and clears it. Reading and pricing are always on.
+ * Sending and clearing spend real money on Base, so they wait for this setting.
+ */
+export const jarOpen = () => process.env.LIFELINE_JAR_REPAYMENTS === "on";
 
 const client = () => createPublicClient({ chain: base, transport: http(process.env.BASE_RPC_URL || "https://mainnet.base.org") });
 const walletFor = (privateKey: `0x${string}`) =>
@@ -198,7 +205,7 @@ const bookIt: JarBooker = async ({ human, agent, amountUsd, reference }) => {
 const sendToJar: JarSender = async ({ privateKey, token, units }) => {
   const c = client();
   const address = JAR_TOKENS[token].address;
-  const jar = jarAddress()!;
+  const jar = jarAddress();
   const owner = privateKeyToAccount(privateKey).address;
   const held = (await c.readContract({ address, abi: ERC20_ABI, functionName: "balanceOf", args: [owner] })) as bigint;
   if (held < units) throw new Error(`The agent holds ${formatUnits(held, JAR_TOKENS[token].decimals)} ${token} on Base, which is not enough.`);
@@ -225,7 +232,7 @@ export async function repayWithToken(
     key?: (a: string) => `0x${string}` | null;
     allow?: (a: string, usd: number) => { ok: boolean; reason?: string };
     owed?: (human: string) => Promise<number>;
-    configured?: () => boolean;
+    open?: () => boolean;
   } = {}
 ) {
   const {
@@ -234,14 +241,14 @@ export async function repayWithToken(
     quote = quoteCredit,
     key = getAgentPrivateKey as any,
     allow = authorizeAgentSpend,
-    configured = jarConfigured,
+    open = jarOpen,
     owed = async (h: string) => {
       const prepared = await prepareArcRepayment(h, Number.MAX_SAFE_INTEGER);
       return prepared.ok ? prepared.owed : 0;
     },
   } = deps;
 
-  if (!configured()) throw new Error("Repaying in other tokens is not set up.");
+  if (!open()) throw new Error("Sending to the jar opens when credit moves to Arc mainnet. The tokens are real money, and credit is on testnet.");
 
   const pending = readRecord().find((r) => r.human === p.human && r.agentAddress === p.agent.address && r.status === "sent");
   if (pending) return finish(pending, p, book);
@@ -288,10 +295,9 @@ async function finish(row: JarRepayment, p: { human: string; agent: Agent }, boo
 
 /** What is in the jar, what it is worth, and what it costs to clear. Public. */
 export async function jarStatus() {
-  if (!jarConfigured()) return { configured: false as const };
   const c = client();
-  const jar = jarAddress()!;
-  const releaser = releaserAddress()!;
+  const jar = jarAddress();
+  const releaser = releaserAddress();
   const held = await Promise.all(
     (Object.keys(JAR_TOKENS) as JarToken[]).map(async (token) => {
       const units = (await c.readContract({ address: JAR_TOKENS[token].address, abi: ERC20_ABI, functionName: "balanceOf", args: [jar] })) as bigint;
@@ -306,7 +312,7 @@ export async function jarStatus() {
   ]);
   const usd = (n: bigint) => Number(formatUnits(n, USDC_DECIMALS));
   return {
-    configured: true as const,
+    open: jarOpen(),
     chain: "Base",
     jar,
     releaser,
@@ -326,11 +332,12 @@ export async function jarStatus() {
 
 /** The public part of the jar's status. */
 export async function jarSummary() {
-  const s = await jarStatus();
-  if (!s.configured) return s;
-  const { _held, _cost, _nonce, ...open } = s;
+  const { _held, _cost, _nonce, ...open } = await jarStatus();
   return open;
 }
+
+/** The contracts and limits, which need no chain read, for when Base does not answer. */
+export const jarContracts = () => ({ open: jarOpen(), chain: "Base", jar: jarAddress(), releaser: releaserAddress(), limits: jarLimits() });
 
 /**
  * Lifeline's own keeper: clear the jar when it is worth it, then swap what came out to
@@ -338,8 +345,8 @@ export async function jarSummary() {
  * reaches Lifeline. This exists so nothing depends on a searcher turning up.
  */
 export async function clearJar() {
+  if (!jarOpen()) return { cleared: false, reason: "Clearing opens with repayments." };
   const s = await jarStatus();
-  if (!s.configured) return { cleared: false, reason: "not set up" };
 
   const { minClearProfitUsd, slippageBps } = jarLimits();
   const items = s._held.filter((h) => h.units > 0n && h.path);
@@ -356,7 +363,7 @@ export async function clearJar() {
   const c = client();
   const wallet = walletFor(keeperKey());
   const keeper = wallet.account.address;
-  const releaser = releaserAddress()!;
+  const releaser = releaserAddress();
 
   const usdcBefore = (await c.readContract({ address: BASE_USDC, abi: ERC20_ABI, functionName: "balanceOf", args: [keeper] })) as bigint;
   if (usdcBefore < cost) {

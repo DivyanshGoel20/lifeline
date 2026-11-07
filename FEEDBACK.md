@@ -28,8 +28,10 @@ transaction from `/swap` ran unchanged on an Anvil fork of Sepolia.
 ## What got in the way
 
 - **No testnet deployment.** The Factory has no code on Sepolia, and the only network where we
-  found it was Base mainnet. A testnet Factory would make it far easier for hackathon teams to
-  try this. Forking works, but a shared testnet is what a demo needs.
+  found it was Base mainnet, so that is where our jar is:
+  [`0x9282…0e8B`](https://basescan.org/address/0x9282BCCAda9C009CCC4c80e52a0A02b342fc0e8B). A testnet
+  Factory would make it far easier for hackathon teams to try this. Forking works, but a shared
+  testnet is what a demo needs: with credit on Arc testnet, our agents cannot yet send real tokens to it.
 - **No Arc deployment.** Uniswap v4 and the Universal Router are on Arc mainnet, but the TJAR
   Factory is not, so a jar for an Arc app has to live on another chain and bridge its proceeds.
 - **Picking a route took work.** With QuoterV2 we try three fee tiers directly and nine through

@@ -246,6 +246,17 @@ What is new since Tokyo, and how it was built: [docs/mumbai](docs/mumbai/README.
 Uniswap integration, with links to the code: [docs/mumbai/uniswap.md](docs/mumbai/uniswap.md).
 Feedback for Uniswap: [FEEDBACK.md](FEEDBACK.md).
 
+### Deployed contracts
+
+| Contract | Network | Address |
+|---|---|---|
+| Lifeline Token Jar (Uniswap TJAR) | Base mainnet | [`0x9282BCCAda9C009CCC4c80e52a0A02b342fc0e8B`](https://basescan.org/address/0x9282BCCAda9C009CCC4c80e52a0A02b342fc0e8B) |
+| ExchangeReleaser (Uniswap TJAR) | Base mainnet | [`0xa64688229151023Ca2b2f9B3eFe9FB9f2899A2Bc`](https://basescan.org/address/0xa64688229151023Ca2b2f9B3eFe9FB9f2899A2Bc) |
+| LifelineCreditFacility | Arc testnet | [`0xd25Fd339E08aad2534dA99B3A02dEec6EC1A818f`](https://testnet.arcscan.app/address/0xd25Fd339E08aad2534dA99B3A02dEec6EC1A818f) |
+| LifelineCollateralVault | Arc testnet | [`0x59B00E85d191bCC376f2593c937E260722bd10Fb`](https://testnet.arcscan.app/address/0x59B00E85d191bCC376f2593c937E260722bd10Fb) |
+| LifelineLendingPool | Arc testnet | [`0x70cF07af1Cd055ceCeE3A2efDc7d623D23EDA02A`](https://testnet.arcscan.app/address/0x70cF07af1Cd055ceCeE3A2efDc7d623D23EDA02A) |
+| Credit facility | Whitechain Sepolia | [`0xaa2d23bac7b6f9b4ca2737252f924b3f485e0686`](https://explorer.testnet.whitechain.io/address/0xaa2d23bac7b6f9b4ca2737252f924b3f485e0686) |
+
 ### Whitechain
 
 Credit and gasless USDT payments for AI agents: [docs/mumbai/whitechain.md](docs/mumbai/whitechain.md).

@@ -21,7 +21,7 @@ git diff pre-mumbai HEAD --stat
 | Lending pool | `contracts/src/LifelineLendingPool.sol`, `GET /api/pool` | Lenders fund the credit and earn borrowers' payments, with limits enforced in the contract |
 | New credit tiers | `web/src/lib/reputationEngine.ts` | Unsecured lines start at $0.50, then $1 and $2. A deposit raises them further |
 | Screens for all of this | `web/src/components/arc/` | Marketplace, deposit-backed credit, lending pool, limits and cross-chain repayment on the Arc dashboard |
-| Repay in any token | `web/src/lib/lifelineJar.ts`, `/api/jar`, [uniswap.md](uniswap.md) | Agents pay debt with tokens on Base through a Uniswap Token Jar. Deployed on Base mainnet and tested on a fork, not switched on in the app |
+| Repay in any token | `web/src/lib/lifelineJar.ts`, `/api/jar`, [uniswap.md](uniswap.md) | Agents pay debt with tokens on Base through a Uniswap Token Jar, live on Base mainnet at [`0x9282…0e8B`](https://basescan.org/address/0x9282BCCAda9C009CCC4c80e52a0A02b342fc0e8B). The dashboard shows it with live prices, and sending opens when credit moves to Arc mainnet |
 | USDT credit on Whitechain | `web/src/lib/whitechain/`, `/whitechain`, [whitechain.md](whitechain.md) | An x402 facilitator and gasless payments in USDT, so an agent with no WBT and no USDT can buy on credit |
 | A switch to mainnet | `NEXT_PUBLIC_ARC_NETWORK`, [mainnet.md](mainnet.md) | One setting moves all of Arc to mainnet. Not yet run with real money |
 | Cross-chain repayment | `web/src/lib/crosschainRepay.ts`, `POST /api/repay/crosschain` | Bridge Kit moves an agent's USDC to Arc, then repays the debt with what arrived |
@@ -73,7 +73,7 @@ flowchart TB
 
 ## Deliberate limits
 
-- **Testnet only.** Nothing here has been used with real money.
+- **Credit runs on testnet.** The one mainnet piece is the Token Jar on Base, which holds nothing yet.
 - **The operator is trusted** to repay the pool and report losses honestly. The
   pool's limits bound what that trust can cost, and do not remove it.
 - **The pool backs loans when it has room.** A loan's principal is drawn from the pool to
