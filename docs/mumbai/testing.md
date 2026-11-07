@@ -46,7 +46,7 @@ https://explorer.testnet.whitechain.io.
 18. **Merchant:** at `/whitechain/merchant`, expect those payments with links, and what the gas cost.
 
 ## Last checks
-20. **Repay in any token:** shows "Not live yet", which is correct.
+20. **Repay in any token:** shows "Not switched on yet", with a link to the deployed jar.
 21. **Sui:** `/sui` opens with its own $0.50 line.
 22. **Mini app:** open in World App and sign in. Expect the same account.
 
@@ -63,4 +63,4 @@ npm run e2e:standing         # late and defaulted loans
 - **$1 and $2 tiers:** these need 7 and 14 days of history.
 - **Late loans and defaults:** loans last 7 days. Use `e2e:standing` and `e2e:secured`.
 - **Finishing a withdrawal:** the vault waits an hour and the pool a day.
-- **The Token Jar on a live network:** Uniswap's factory is not on any testnet we checked. Use `e2e:jar`.
+- **Tokens through the Token Jar:** it is deployed on Base mainnet but switched off, so use `e2e:jar`.

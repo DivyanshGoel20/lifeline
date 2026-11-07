@@ -62,7 +62,15 @@ export const RepayAnyToken: React.FC<{
     <Section title="Repay in any token" label="uniswap token jar · base">
       {error ? <ErrorNote>{error}</ErrorNote> : null}
       {loading && !data ? <Loading what="the jar" /> : null}
-      {data && !data.configured ? <Note>Not live yet: the Token Jar has not been deployed on Base.</Note> : null}
+      {data && !data.configured ? (
+        <Note>
+          Not switched on yet. The{" "}
+          <a className="underline" target="_blank" rel="noreferrer" href="https://basescan.org/address/0x9282BCCAda9C009CCC4c80e52a0A02b342fc0e8B">
+            Token Jar is deployed on Base
+          </a>
+          , but tokens sent to it are real money and credit here is still on testnet, so repayments wait until credit is on mainnet.
+        </Note>
+      ) : null}
 
       {data?.configured ? (
         <>

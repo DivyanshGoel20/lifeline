@@ -1,6 +1,18 @@
 # Uniswap: repay in any token
 
-**Status: built, and tested on a local fork of Base. Not deployed. Nothing on mainnet yet.**
+**Status: the Token Jar is deployed on Base mainnet, through Uniswap's real TJAR factory. It is not switched on in
+the app, and no tokens have gone through it. The full flow is tested on a local fork of Base.**
+
+| Contract | Address |
+|---|---|
+| Lifeline Token Jar | [`0x9282BCCAda9C009CCC4c80e52a0A02b342fc0e8B`](https://basescan.org/address/0x9282BCCAda9C009CCC4c80e52a0A02b342fc0e8B) |
+| ExchangeReleaser | [`0xa64688229151023Ca2b2f9B3eFe9FB9f2899A2Bc`](https://basescan.org/address/0xa64688229151023Ca2b2f9B3eFe9FB9f2899A2Bc) |
+| Deployment | [`0x239c4aaf…598d`](https://basescan.org/tx/0x239c4aaf7868941a9f14f2ddddbc199c9d480b0016236e341a0b0872e1b9598d) |
+
+Read back from the chain: clearing costs 5 USDC, which goes to `0x5233…32B3`, also the owner of both.
+
+**Why it is off:** credit is still on Arc testnet, and tokens sent to a jar cannot come back. An agent would pay real
+tokens to clear a testnet debt, and the USDC could not bridge from Base mainnet to Arc testnet.
 
 ## The problem and the idea
 
@@ -78,19 +90,14 @@ Nothing here has been run on mainnet. The steps are:
    jar on Base mainnet and credit on Arc testnet, repayments would book but `bridgeProceedsToArc`
    has nowhere to send real money. A complete run needs the facility, vault and pool on Arc mainnet too.
 2. **Fund a keeper** on Base with ETH for gas and USDC for the threshold.
-3. **Simulate, then deploy.** Without `--broadcast` this cannot spend anything:
-   ```bash
-   cd contracts
-   LIFELINE_JAR_RECIPIENT=<wallet> LIFELINE_JAR_OWNER=<owner> \
-     forge script script/DeployLifelineJar.s.sol --rpc-url https://mainnet.base.org
-   ```
+3. **The jar is already deployed** (above). Only the keeper funding and these settings remain.
 4. **Set** `LIFELINE_JAR_ADDRESS`, `LIFELINE_JAR_RELEASER_ADDRESS`, `BASE_RPC_URL` and
    `LIFELINE_JAR_KEEPER_KEY`. The feature stays off until the two addresses are set.
 5. **Test with a dollar** before anything larger. Agents also need ETH on Base for gas.
 
 ## Not tested
 
-- Anything on real mainnet.
+- Tokens through the deployed jar, or clearing it, on real mainnet. Only its deployment and settings are confirmed.
 - `bridgeProceedsToArc`: a bridge cannot leave a fork.
 - The route booking on a live Arc facility with a real token. The fork test stands in for that one step,
   which uses the same booking path as a card repayment.

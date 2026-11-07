@@ -14,7 +14,7 @@ Checked on Arc mainnet: USDC answers at `0x3600…0000`, and Circle Gateway list
 
 1. **Use a wallet that holds little.** The operator key sits on the server.
 2. **Deploy on Arc:** the facility (`script/DeployArc.s.sol`), then the vault and pool (`script/DeploySecured.s.sol`).
-3. **Deploy the jar on Base:** `script/DeployLifelineJar.s.sol`. See [uniswap.md](uniswap.md).
+3. **The jar is already on Base:** `0x9282BCCAda9C009CCC4c80e52a0A02b342fc0e8B`. See [uniswap.md](uniswap.md).
 4. **Set the addresses:** `LIFELINE_CREDIT_FACILITY_ADDRESS`, `NEXT_PUBLIC_LIFELINE_CREDIT_FACILITY_ADDRESS`,
    `LIFELINE_COLLATERAL_VAULT_ADDRESS`, `LIFELINE_LENDING_POOL_ADDRESS`, `LIFELINE_JAR_ADDRESS` and
    `LIFELINE_JAR_RELEASER_ADDRESS`.
