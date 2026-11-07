@@ -1,9 +1,8 @@
-import { ARC_GATEWAY_CHAIN } from "./arc";
-import { GatewayClient } from "@circle-fin/x402-batching/client";
 import { createPublicClient, parseAbi, parseUnits } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { ARC_USDC_ADDRESS } from "./arc";
-import { getArcTransport, healthyArcEndpoint } from "./arcRpc";
+import { getArcTransport } from "./arcRpc";
+import { arcGatewayClient, depositReallyFailed } from "./arcGateway";
 
 const BALANCE_ABI = parseAbi(["function balanceOf(address) view returns (uint256)"]);
 
@@ -29,13 +28,6 @@ export async function depositToAgentGateway(
   if (!key) throw new Error("Missing LIFELINE_FUNDING_PRIVATE_KEY for disbursement");
 
   const funder = privateKeyToAccount(key).address;
-  const client = () => {
-    const c = new GatewayClient({ chain: ARC_GATEWAY_CHAIN, privateKey: key, rpcUrl: healthyArcEndpoint() });
-    // The SDK does not expose this, and its default waits 4 seconds per check on a chain
-    // that finalises in under one. A draw makes two of these waits.
-    (c as any).publicClient.pollingInterval = 500;
-    return c;
-  };
   const usdcHeld = () =>
     createPublicClient({ transport: getArcTransport() }).readContract({ address: ARC_USDC_ADDRESS, abi: BALANCE_ABI, functionName: "balanceOf", args: [funder] });
   const units = parseUnits(amountUsdc.toFixed(6), 6);
@@ -48,9 +40,12 @@ export async function depositToAgentGateway(
       // depositFor credits the balance to `depositor` rather than to the caller,
       // so the funds become the agent's spending capacity while the debt stays
       // recorded against the human.
-      const result: any = await client().depositFor(amountUsdc.toFixed(6), agentAddress as `0x${string}`);
+      const result: any = await arcGatewayClient(key).depositFor(amountUsdc.toFixed(6), agentAddress as `0x${string}`);
       return { depositTxHash: result?.depositTxHash ?? result?.txHash };
     } catch (err: any) {
+      const checked = await depositReallyFailed(err);
+      if (checked?.succeeded) return { depositTxHash: checked.hash };
+      if (checked) throw err;
       const text = `${err?.shortMessage ?? ""} ${err?.message ?? ""}`;
       if (attempt >= 4 || !/limit|429|too long|timeout|fetch failed|network/i.test(text)) throw err;
       await new Promise((r) => setTimeout(r, attempt * 3000));

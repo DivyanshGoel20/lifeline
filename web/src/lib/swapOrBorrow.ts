@@ -1,7 +1,6 @@
 import { formatUnits, parseUnits } from "viem";
-import { GatewayClient } from "@circle-fin/x402-batching/client";
-import { ARC_BRIDGE_CHAIN, ARC_GATEWAY_CHAIN } from "./arc";
-import { healthyArcEndpoint } from "./arcRpc";
+import { ARC_BRIDGE_CHAIN } from "./arc";
+import { arcGatewayClient, depositReallyFailed } from "./arcGateway";
 import { DAILY_INTEREST_RATE, ORIGINATION_FEE_RATE } from "./reputationEngine";
 import { executeSwap, formatToken, holdingsOf, quoteForUsdc, swapChain, uniswapConfigured, usdcOn, weiToUsd, type SwapQuote } from "./uniswapApi";
 
@@ -180,9 +179,13 @@ const bridgeToArc = async (privateKey: `0x${string}`, amountUsd: number) => {
 };
 
 const depositToOwnGateway = async (privateKey: `0x${string}`, amountUsd: number) => {
-  const client = new GatewayClient({ chain: ARC_GATEWAY_CHAIN, privateKey, rpcUrl: healthyArcEndpoint() });
-  (client as any).publicClient.pollingInterval = 500;
-  return client.deposit(amountUsd.toFixed(6));
+  try {
+    return await arcGatewayClient(privateKey).deposit(amountUsd.toFixed(6));
+  } catch (err) {
+    const checked = await depositReallyFailed(err);
+    if (!checked?.succeeded) throw err;
+    return { depositTxHash: checked.hash };
+  }
 };
 
 /**

@@ -1,5 +1,5 @@
 import { chooseFunding, fundBySwap, type FundingDecision } from "./swapOrBorrow";
-import { healthyArcEndpoint } from "./arcRpc";
+import { arcGatewayClient } from "./arcGateway";
 import { GatewayClient } from "@circle-fin/x402-batching/client";
 import { ORIGINATION_FEE_RATE } from "./reputationEngine";
 import { approvalCovers, capHoldVerdict } from "./spendingCap";
@@ -120,11 +120,7 @@ export class LifelineSigner {
       throw new Error("Missing LIFELINE_FUNDING_PRIVATE_KEY or PRIVATE_KEY in environment");
     }
 
-    this.fundingClient = new GatewayClient({
-      chain: options?.chain || ARC_GATEWAY_CHAIN,
-      privateKey: this.fundingPrivateKey,
-      rpcUrl: healthyArcEndpoint(),
-    });
+    this.fundingClient = arcGatewayClient(this.fundingPrivateKey);
   }
 
   /**
