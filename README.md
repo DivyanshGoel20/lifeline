@@ -246,6 +246,19 @@ What is new since Tokyo, and how it was built: [docs/mumbai](docs/mumbai/README.
 Uniswap integration, with links to the code: [docs/mumbai/uniswap.md](docs/mumbai/uniswap.md).
 Feedback for Uniswap: [FEEDBACK.md](FEEDBACK.md).
 
+Where Uniswap is used:
+
+| What | Code |
+|---|---|
+| Deploy the Token Jar through the TJAR factory | [`DeployLifelineJar.s.sol#L44`](contracts/script/DeployLifelineJar.s.sol#L44) |
+| Price a token on QuoterV2 | [`quoteToUsdc`](web/src/lib/lifelineJar.ts#L121) |
+| Pay debt by sending a token to the jar | [`repayWithToken`](web/src/lib/lifelineJar.ts#L226) |
+| Clear the jar with the ExchangeReleaser, then swap on SwapRouter02 | [`clearJar`](web/src/lib/lifelineJar.ts#L347) |
+| Uniswap API: quote | [`quoteForUsdc`](web/src/lib/uniswapApi.ts#L110) |
+| Uniswap API: build and send a swap | [`buildSwap`](web/src/lib/uniswapApi.ts#L177), [`executeSwap`](web/src/lib/uniswapApi.ts#L187) |
+| Swap or borrow, whichever is cheaper | [`chooseFunding`](web/src/lib/swapOrBorrow.ts#L118) |
+| Repay in any token from a wallet: swap, then bridge | [`swapAndBridge`](web/src/lib/tokenRepay.ts#L32) |
+
 ### Deployed contracts
 
 | Contract | Network | Address |
@@ -259,7 +272,23 @@ Feedback for Uniswap: [FEEDBACK.md](FEEDBACK.md).
 
 ### Whitechain
 
-Credit and gasless USDT payments for AI agents: [docs/mumbai/whitechain.md](docs/mumbai/whitechain.md).
+Credit and gasless USDT payments for AI agents: [docs/mumbai/whitechain.md](docs/mumbai/whitechain.md) has the setup and how it works.
+Feedback for Whitechain: [WHITECHAIN_FEEDBACK.md](WHITECHAIN_FEEDBACK.md).
+
+USDT settled on Whitechain Sepolia, in the main flow:
+
+- Paid by Lifeline on credit: [`0xcef96718…de4b`](https://explorer.testnet.whitechain.io/tx/0xcef967183f062644d1c46ee2798893e876844902d0f278b02da65ee1c7bcde4b)
+- Repaid with a signature, gas paid by the relayer: [`0xb10667cf…8514`](https://explorer.testnet.whitechain.io/tx/0xb10667cf957f5e9b65a3d08376b64522a0c00da212cc79b2a3ae96e2ff2c8514)
+- An agent holding no WBT paying for itself: [`0x75e782e3…2417`](https://explorer.testnet.whitechain.io/tx/0x75e782e3fb71d41e6037e05f683aeb2dd74ae0c5373ea13249e4b9fcc9c42417)
+
+**Before and during the hackathon.** Before (everything up to tag `pre-mumbai`, commit `f5df633`,
+[ETHGlobal Tokyo](https://ethglobal.com/showcase/lifeline-mygz6)): credit lines for agents on Arc and Sui, in USDC,
+with nothing on Whitechain. Added here: the x402 facilitator and relayer for USDT, the merchant's pay-per-request API,
+credit in USDT, the `/whitechain` screens and the `lifeline_whitechain` agent tool. The credit facility's Solidity is
+from before the event, deployed here unchanged, in USDT.
+
+**Current limitations.** Testnet tokens only. Lifeline holds the agent's key, encrypted, so this is custodial. One
+operator key is the relayer, treasury and facility owner. No real users yet.
 
 An AI agent cannot open a card account or pass a bank's checks. USDT on Whitechain lets it pay per request, at any hour, in amounts as small as a cent, and a card network could not settle a $0.01 payment to a piece of software.
 

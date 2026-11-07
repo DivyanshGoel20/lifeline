@@ -75,9 +75,7 @@ Studio's report was not taken on trust. Separately from Studio:
 
 ## Before submitting
 
-- **The project URL is not public yet.** Logged out, it redirects to Arc Studio's home
-  page, so a judge cannot see it. Look for sharing options in the Studio workspace, or
-  ask Arc's team at the booth how they want it shared. The track requires a shareable URL.
+- Submit the share link above as the shareable URL. The `/app/` link redirects to Studio's home page when logged out.
 - `arc-studio deployments` lists nothing, because the contracts were deployed by a script
   in the sandbox rather than through Studio's deploy workflow. The deployment record and
   explorer links above are the evidence. Ask Arc's team whether that is enough.

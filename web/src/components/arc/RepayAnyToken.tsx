@@ -87,7 +87,7 @@ export const RepayAnyToken: React.FC<{
               <Readout label="Times cleared" value={data.nonce ?? "0"} />
             </div>
           ) : (
-            <Note>Base did not answer just now, so the jar's balance is not shown.</Note>
+            <Note>Base did not answer just now, so the balance is not shown.</Note>
           )}
 
           <div className="space-y-1">
