@@ -24,6 +24,8 @@ export const whitechainSepolia = defineChain({
   rpcUrls: { default: { http: ["https://rpc.testnet.whitechain.io"] } },
   blockExplorers: { default: { name: "Blockscout", url: WC_EXPLORER } },
   testnet: true,
+  // Without this viem assumes 12 second blocks and polls every 4 seconds.
+  blockTime: 1000,
 });
 
 export const wcPublicClient = () => createPublicClient({ chain: whitechainSepolia, transport: http(wcRpcUrl()) });

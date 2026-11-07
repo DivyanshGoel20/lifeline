@@ -29,7 +29,13 @@ export async function depositToAgentGateway(
   if (!key) throw new Error("Missing LIFELINE_FUNDING_PRIVATE_KEY for disbursement");
 
   const funder = privateKeyToAccount(key).address;
-  const client = () => new GatewayClient({ chain: ARC_GATEWAY_CHAIN, privateKey: key, rpcUrl: healthyArcEndpoint() });
+  const client = () => {
+    const c = new GatewayClient({ chain: ARC_GATEWAY_CHAIN, privateKey: key, rpcUrl: healthyArcEndpoint() });
+    // The SDK does not expose this, and its default waits 4 seconds per check on a chain
+    // that finalises in under one. A draw makes two of these waits.
+    (c as any).publicClient.pollingInterval = 500;
+    return c;
+  };
   const usdcHeld = () =>
     createPublicClient({ transport: getArcTransport() }).readContract({ address: ARC_USDC_ADDRESS, abi: BALANCE_ABI, functionName: "balanceOf", args: [funder] });
   const units = parseUnits(amountUsdc.toFixed(6), 6);

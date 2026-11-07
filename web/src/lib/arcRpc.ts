@@ -8,7 +8,7 @@ import { ARC_IS_MAINNET, ARC_RPC_URL } from "./arc";
  * load makes dozens of reads, and retrying them all against the same endpoint turned a
  * two-second transaction into a ninety-second one, and could fail a draw halfway. So:
  *   - a rate-limited endpoint rests while the others take over;
- *   - only a few calls run at once, in order, rather than all failing together;
+ *   - only a few calls run at once, with transactions ahead of reads;
  *   - identical reads share one answer for a moment. Any write clears those answers.
  */
 const PUBLIC_ENDPOINTS = ARC_IS_MAINNET
@@ -30,13 +30,14 @@ type Shared = {
   restingUntil: Map<string, number>;
   active: number;
   waiting: (() => void)[];
+  urgent: (() => void)[];
   answers: Map<string, { at: number; text: string }>;
   inFlight: Map<string, Promise<string>>;
 };
 // On globalThis: Next bundles routes apart, and the limits are per process.
 const g = globalThis as unknown as { __lifelineArcRpc?: Shared };
 const shared = (): Shared =>
-  (g.__lifelineArcRpc ??= { restingUntil: new Map(), active: 0, waiting: [], answers: new Map(), inFlight: new Map() });
+  (g.__lifelineArcRpc ??= { restingUntil: new Map(), active: 0, waiting: [], urgent: [], answers: new Map(), inFlight: new Map() });
 
 /** Tests start clean. */
 export const resetArcRpc = () => {
@@ -50,21 +51,22 @@ export function healthyArcEndpoint(now = Date.now()): string {
   return list.find((u) => (s.restingUntil.get(u) ?? 0) <= now) ?? [...list].sort((a, b) => (s.restingUntil.get(a) ?? 0) - (s.restingUntil.get(b) ?? 0))[0];
 }
 
-async function withSlot<T>(fn: () => Promise<T>): Promise<T> {
+/** Someone's transaction goes ahead of a dashboard's reads. */
+async function withSlot<T>(urgent: boolean, fn: () => Promise<T>): Promise<T> {
   const s = shared();
-  if (s.active >= MAX_CONCURRENT) await new Promise<void>((resolve) => s.waiting.push(resolve));
+  if (s.active >= MAX_CONCURRENT) await new Promise<void>((resolve) => (urgent ? s.urgent : s.waiting).push(resolve));
   s.active++;
   try {
     return await fn();
   } finally {
     s.active--;
-    s.waiting.shift()?.();
+    (s.urgent.shift() ?? s.waiting.shift())?.();
   }
 }
 
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function send(body: string, headers: HeadersInit | undefined, signal: AbortSignal | null | undefined): Promise<string> {
+async function send(body: string, urgent: boolean, headers: HeadersInit | undefined, signal: AbortSignal | null | undefined): Promise<string> {
   const s = shared();
   let lastError: unknown = new Error("Arc RPC did not answer.");
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -72,7 +74,7 @@ async function send(body: string, headers: HeadersInit | undefined, signal: Abor
     const resting = (s.restingUntil.get(url) ?? 0) - Date.now();
     if (resting > 0) await pause(Math.min(resting, 3_000));
     try {
-      const text = await withSlot(async () => {
+      const text = await withSlot(urgent, async () => {
         const res = await fetch(url, { method: "POST", headers, body, signal: signal ?? undefined });
         const answer = await res.text();
         if (res.status === 429 || res.status === 503 || THROTTLED.test(answer.slice(0, 500))) {
@@ -105,7 +107,7 @@ export async function arcFetch(_input: RequestInfo | URL, init?: RequestInit): P
   const respond = (text: string) => new Response(text, { status: 200, headers: { "Content-Type": "application/json" } });
 
   if (method && WRITES.has(method)) s.answers.clear();
-  if (!method || !CACHEABLE.has(method)) return respond(await send(body, init?.headers, init?.signal));
+  if (!method || !CACHEABLE.has(method)) return respond(await send(body, true, init?.headers, init?.signal));
 
   // The request id differs each time, and the answer must carry the caller's.
   const key = JSON.stringify([method, parsed.params]);
@@ -121,7 +123,7 @@ export async function arcFetch(_input: RequestInfo | URL, init?: RequestInit): P
 
   let pending = s.inFlight.get(key);
   if (!pending) {
-    pending = send(body, init?.headers, null)
+    pending = send(body, false, init?.headers, null)
       .then((text) => {
         // An error is not worth repeating to the next caller.
         if (!/"error"\s*:/.test(text)) s.answers.set(key, { at: Date.now(), text });

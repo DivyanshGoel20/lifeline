@@ -20,6 +20,9 @@ import { CREDIT_TIERS } from "./reputationEngine";
 export const arcTestnetChain = defineChain({
   id: ARC_CHAIN_ID,
   name: ARC_NAME,
+  // Without this viem assumes 12 second blocks, and waits 4 seconds between checks on
+  // every transaction. Arc finalises in under a second.
+  blockTime: 500,
   nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
   rpcUrls: {
     default: {
@@ -832,12 +835,13 @@ const cacheKeyFor = (id: bigint) => `${LIFELINE_CREDIT_FACILITY_ADDRESS.toLowerC
 async function warmRecordCache(
   publicClient: ReturnType<typeof getPublicClient>,
   fn: "drawdowns" | "repayments",
-  nextId: bigint
+  nextId: bigint,
+  firstId: bigint
 ) {
   const key = cacheKeyFor;
   const cache = recordCache[fn];
   const missing: bigint[] = [];
-  for (let id = BigInt(1); id < nextId; id++) {
+  for (let id = firstId; id < nextId; id++) {
     if (!cache.has(key(id))) missing.push(id);
   }
   if (missing.length === 0) return cache;
@@ -866,6 +870,15 @@ async function warmRecordCache(
   }
   return cache;
 }
+
+/**
+ * The facility's records are everyone's, in one list that grows with every loan. Reading
+ * all of them to find one person's cost hundreds of calls per dashboard load, which got
+ * the whole app rate-limited. The newest are enough: a profile's totals are read directly,
+ * and its full history is on Lifeline's ledger.
+ */
+const RECENT_RECORDS = BigInt(30);
+const recentFrom = (next: bigint) => (next > RECENT_RECORDS + BigInt(1) ? next - RECENT_RECORDS : BigInt(1));
 
 export async function fetchCompleteContractTelemetry(
   customHumanOwner?: string,
@@ -963,10 +976,11 @@ export async function fetchCompleteContractTelemetry(
     })
     .catch(() => BigInt(1))) as bigint;
 
-  const drawdownRows = await warmRecordCache(publicClient, "drawdowns", nextLoanId);
+  const firstLoan = recentFrom(nextLoanId);
+  const drawdownRows = await warmRecordCache(publicClient, "drawdowns", nextLoanId, firstLoan);
 
   const drawdowns = [];
-  for (let id = BigInt(1); id < nextLoanId; id++) {
+  for (let id = firstLoan; id < nextLoanId; id++) {
     try {
       const d = drawdownRows.get(cacheKeyFor(id)) as any;
       if (!d) continue;
@@ -1014,10 +1028,11 @@ export async function fetchCompleteContractTelemetry(
     })
     .catch(() => BigInt(1))) as bigint;
 
-  const repaymentRows = await warmRecordCache(publicClient, "repayments", nextRepaymentId);
+  const firstRepayment = recentFrom(nextRepaymentId);
+  const repaymentRows = await warmRecordCache(publicClient, "repayments", nextRepaymentId, firstRepayment);
 
   const repayments = [];
-  for (let id = BigInt(1); id < nextRepaymentId; id++) {
+  for (let id = firstRepayment; id < nextRepaymentId; id++) {
     try {
       const r = repaymentRows.get(cacheKeyFor(id)) as any;
       if (!r) continue;
