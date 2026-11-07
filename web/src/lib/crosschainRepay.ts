@@ -55,13 +55,16 @@ const bookRepayment: Booker = async ({ human, agent, amountUsd }) => {
   }
 };
 
+const ARRIVAL_CHECKS = 15;
+const ARRIVAL_WAIT_MS = 2000;
+
 const readWallet = async (address: string) => Number(await getAgentWalletUsdc(address));
 
 export async function repayFromOtherChain(
   p: { human: string; agent: Agent; from: BridgeChain; amountUsd: number },
-  deps: { bridge?: Bridger; book?: Booker; wallet?: (a: string) => Promise<number>; key?: (a: string) => `0x${string}` | null | undefined; allow?: (a: string, usd: number) => { ok: boolean; reason?: string } } = {}
+  deps: { pause?: (ms: number) => Promise<void>; bridge?: Bridger; book?: Booker; wallet?: (a: string) => Promise<number>; key?: (a: string) => `0x${string}` | null | undefined; allow?: (a: string, usd: number) => { ok: boolean; reason?: string } } = {}
 ) {
-  const { bridge = bridgeWithKit, book = bookRepayment, wallet = readWallet, key = getAgentPrivateKey as any, allow = authorizeAgentSpend as any } = deps;
+  const { pause = (ms: number) => new Promise<void>((r) => setTimeout(r, ms)), bridge = bridgeWithKit, book = bookRepayment, wallet = readWallet, key = getAgentPrivateKey as any, allow = authorizeAgentSpend as any } = deps;
 
   const privateKey = key(p.agent.address);
   if (!privateKey) throw new Error("Lifeline does not hold this agent's key, so it cannot move its money.");
@@ -78,7 +81,13 @@ export async function repayFromOtherChain(
   }
 
   // Repay what actually arrived: the bridge takes its fee from the amount sent.
-  const arrived = Math.round(((await wallet(p.agent.address)) - before) * 1e6) / 1e6;
+  // The balance can lag the mint for a few seconds, depending on which RPC node answers.
+  let arrived = 0;
+  for (let i = 0; i < ARRIVAL_CHECKS; i++) {
+    arrived = Math.round(((await wallet(p.agent.address)) - before) * 1e6) / 1e6;
+    if (arrived > 0) break;
+    if (i < ARRIVAL_CHECKS - 1) await pause(ARRIVAL_WAIT_MS);
+  }
   if (!(arrived > 0)) throw Object.assign(new Error("The bridge reported success, but nothing has reached the agent's wallet on Arc yet. Repay once it arrives."), { steps });
 
   const repaid = await book({ human: p.human, agent: p.agent, amountUsd: arrived });

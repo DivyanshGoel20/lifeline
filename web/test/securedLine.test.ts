@@ -134,6 +134,7 @@ function deps(over: Record<string, unknown> = {}) {
   return {
     booked,
     deps: {
+      pause: async () => undefined,
       key: () => "0xkey" as `0x${string}`,
       allow: () => ({ ok: true }),
       wallet: async () => balance,
@@ -159,6 +160,17 @@ test("a bridge that fails repays nothing and says where it stopped", async () =>
   const d = deps({ bridge: async () => ({ state: "error", steps: [{ name: "burn", state: "error", errorMessage: "no gas" }] }) });
   await assert.rejects(repayFromOtherChain(base, d.deps), /no gas/);
   assert.deepEqual(d.booked, []);
+});
+
+test("a balance that lags the mint is waited for", async () => {
+  let reads = 0;
+  const d = deps({
+    bridge: async () => ({ state: "success", steps }),
+    wallet: async () => (++reads < 4 ? 1 : 5.99),
+  });
+  const out = await repayFromOtherChain(base, d.deps);
+  assert.equal(out.bridgedUsd, 4.99);
+  assert.deepEqual(d.booked, [4.99]);
 });
 
 test("money that has not arrived is not repaid", async () => {
