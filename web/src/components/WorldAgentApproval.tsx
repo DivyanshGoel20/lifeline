@@ -138,7 +138,7 @@ export const WorldAgentApproval: React.FC<{
       <div className="lab">{step === "link" ? "World ID for Agents · link, once" : "World ID for Agents · fresh approval"}</div>
       <p className="text-[13px] ink-2 leading-relaxed">
         {step === "link"
-          ? "First, link World ID for Agents to this account. From then on only your World ID can approve what your agents do."
+          ? "You are signed in. This is a separate, one-time step, so that only your World ID can approve what your agents do."
           : "An agent's payment is waiting on you. Approve it in the World ID app - a fresh proof that it is you, right now. Until then nothing is paid."}
       </p>
 

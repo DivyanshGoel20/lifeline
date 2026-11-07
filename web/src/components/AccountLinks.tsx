@@ -70,23 +70,22 @@ export const AccountLinks: React.FC<{ onToast: (m: string) => void }> = ({ onToa
             {registry ? ` · ${registry.lookups.length} lookup${registry.lookups.length === 1 ? "" : "s"}` : ""}
           </button>
         )}
+        {/* Not sign-in: you are signed in already. This is optional, and a held payment asks for it when it is needed. */}
+        {showAgents && !agents!.linked && !linking && (
+          <button
+            onClick={() => setLinking(true)}
+            title="Optional. Lets you approve held payments with a fresh World ID check, and shows partner apps whether you repay: good, late or in default, never amounts."
+            className="mono text-[10.5px] ink-3 underline underline-offset-2"
+          >
+            Turn on payment approvals
+          </button>
+        )}
         {hasSession && (
           <button onClick={openInWorldApp} disabled={making} className="mono text-[10.5px] ink-3 underline underline-offset-2">
             {qr ? "hide" : "Open in World App"}
           </button>
         )}
       </div>
-      {showAgents && !agents!.linked && !linking && (
-        <div className="p-4 flex flex-wrap items-center justify-between gap-3 max-w-[640px] ml-auto" style={{ border: "1px solid var(--rule)" }}>
-          <p className="text-[12.5px] ink-2 leading-snug max-w-[46ch]">
-            <b>Finish setting up: link World ID.</b> It lets you approve held payments, and lists you in the Lifeline registry:
-            partner World apps you sign in to can see whether you repay - good, late or in default, never amounts.
-          </p>
-          <button className="btn btn-solid shrink-0" onClick={() => setLinking(true)}>
-            Link World ID
-          </button>
-        </div>
-      )}
       {showLookups && registry && (
         <div className="sheet p-4 max-w-[520px] ml-auto space-y-2">
           <div className="lab">Who has looked you up</div>
