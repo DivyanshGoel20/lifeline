@@ -13,6 +13,18 @@ and Uniswap v3 on Base, at ETHGlobal Mumbai. Written from what actually happened
 - **Forking Base with Anvil worked first time** against the real Factory, pools and QuoterV2.
   The full flow could be tested with no real money.
 
+## The Uniswap API
+
+We use it for two features: deciding whether an agent should swap or borrow, and letting a person
+repay in any token. Quote, approval check and swap all worked first time with one key, and a
+transaction from `/swap` ran unchanged on an Anvil fork of Sepolia.
+
+- **Base Sepolia does not route.** The same quote that works on Sepolia and Unichain Sepolia answered
+  `UpstreamTimeoutError` with a 404 on chain 84532. The message suggests a retry may help, and it
+  did not. A clear "not supported on this chain" would save time.
+- **`gasFeeUSD` is missing on testnets.** Our cost comparison needs gas in dollars, so we had to
+  convert `gasFee` ourselves using a mainnet price.
+
 ## What got in the way
 
 - **No testnet deployment.** The Factory has no code on Sepolia, and the only network where we

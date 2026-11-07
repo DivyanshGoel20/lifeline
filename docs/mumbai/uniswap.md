@@ -26,6 +26,37 @@ to run swaps, hold volatile tokens, or trust its own prices. So:
 | Agent tool | `lifeline_repay` with `token` and `tokenAmount`, in `mcp/server.ts` |
 | Test on a fork of Base | [`web/test/e2e/jar.fork.e2e.ts`](../../web/test/e2e/jar.fork.e2e.ts): `npm run e2e:jar` |
 
+## The Uniswap API
+
+Two more features use the [Uniswap API](https://developers.uniswap.org). The key stays on the server.
+
+**Swap or borrow** ([`web/src/lib/swapOrBorrow.ts`](../../web/src/lib/swapOrBorrow.ts)). When an agent is
+short of USDC, before any loan is recorded, the API prices swapping what it holds. The swap's cost is
+price impact, pool fees, gas and bridging. Borrowing's is the 1% fee, expected interest, and a charge for
+tying up the line, which is a judgement set by `LIFELINE_LINE_COST_RATE`. The cheaper one wins, and the receipt
+says why. If Uniswap fails or takes over 3.5 seconds, Lifeline borrows, as it always did.
+
+Priced on Base with real quotes:
+
+| Purchase | Borrowing costs | Swapping costs | Choice |
+|---|---|---|---|
+| $0.20 | $0.0027 | $0.0281 | Borrow |
+| $1 | $0.0216 | $0.0286 | Borrow |
+| $5 | $0.1080 | $0.0290 | Swap, saves $0.08 |
+| $25 | $0.5400 | $0.0354 | Swap, saves $0.50 |
+
+On testnet Sepolia's gas is priced as if real, so borrowing nearly always wins unless the line is full.
+
+**Repay in any token** ([`web/src/lib/tokenRepay.ts`](../../web/src/lib/tokenRepay.ts), `/api/uniswap/repay`). The Repay
+sheet offers it beside wallet and card. Uniswap swaps to USDC, Bridge Kit moves it to Arc, and it is booked
+through the same check as any wallet repayment.
+
+Swaps run on Base on mainnet and on Sepolia on testnet. The API does not route on Base Sepolia.
+
+**Tested:** `npm run e2e:uniswap` runs the API's real quotes and swap transaction on a local copy of Sepolia.
+**Not tested:** a swap on a live network, the bridge straight after a swap, and the Repay sheet's token
+option with a real wallet.
+
 ## Who carries what risk
 
 Lifeline advances the repayment, so lenders are paid at once. Until the jar clears, **Lifeline
