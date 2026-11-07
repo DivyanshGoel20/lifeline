@@ -1,7 +1,10 @@
 # Whitechain: credit and gasless USDT payments for agents
 
-**Status: built, and tested against a local copy of Whitechain Sepolia with the real USDT.
-Not yet deployed on the live testnet.** See [Before submitting](#before-submitting).
+**Status: deployed and verified on Whitechain Sepolia. The flow is tested against a local copy of the
+chain with the real USDT. The first live payment is waiting on test USDT.**
+
+- Credit facility: [`0xaa2d23bac7b6f9b4ca2737252f924b3f485e0686`](https://explorer.testnet.whitechain.io/address/0xaa2d23bac7b6f9b4ca2737252f924b3f485e0686), verified.
+- Deployment: [`0x609288cc…6bbc`](https://explorer.testnet.whitechain.io/tx/0x609288ccb9372849563a8f0239ac3b8bb8edefe55447fa48df21bfb7f8596bbc).
 
 **Bounties:** Continuity: Bring Your Product to Whitechain. Payments Nobody Notices.
 
@@ -112,7 +115,7 @@ npm run e2e:whitechain-fork
 
 ## Before submitting
 
-- [ ] Fund the operator and deploy (see below), and put the explorer links here.
+- [x] Deployed and verified (links above).
+- [ ] Test USDT for the operator wallet.
 - [ ] One real USDT payment, and its explorer link here.
-- [ ] Verified contract link here.
 - [ ] A 2 to 4 minute video showing the human, the agent and the merchant.

@@ -1,94 +1,67 @@
 # Testing Lifeline by hand
 
-**Site:** https://lifeline-arc.vercel.app/arc, in a desktop browser. Do not use the World App QR.
-World ID is switched off for testing, so anyone with the link gets a test account. Only testnet money moves.
+**Site:** https://lifeline-arc.vercel.app/arc. Everything here runs on testnets, so no real money moves.
 
 ## Before you start
-1. Install a browser wallet such as MetaMask.
-2. Connect the wallet when the app asks. It adds Arc testnet for you.
-3. Get about 3 testnet USDC from https://faucet.circle.com, choosing Arc Testnet.
+- World App on your phone, with World ID.
+- A browser wallet such as MetaMask. The app adds Arc testnet for you when you connect.
+- About 3 USDC on Arc testnet from https://faucet.circle.com.
+- For Test 9 only: USDC and a little ETH on Base Sepolia.
 
-Transactions can be checked at https://testnet.arcscan.app.
+Check transactions at https://testnet.arcscan.app, https://sepolia.basescan.org and
+https://explorer.testnet.whitechain.io.
 
-## Test 1: sign in
-Click **Continue as a test account**.
-Expect Headroom $0.50, Drawn $0.00, Line $0.50.
+## Sign in
+1. **Join with World ID:** click **Join with World ID**, scan the QR with your phone, and approve. Expect the dashboard with Line $0.50.
+2. **Coming back:** sign out, then sign in again. The same account should return, without a new uniqueness proof.
 
-## Test 2: authorize an agent
-Click **Authorize your first agent**, name it, leave the address empty, keep the cap at 5, and click **Authorize**.
-Expect a lead with the agent, its address, "Owes $0.00", and **Buy** and **Revoke**.
+## Credit and Nanopayments
+3. **Add an agent:** **Authorize your first agent**, enter a name, leave the address empty, click **Authorize**.
+4. **Take a loan:** **x402 Purchase**, **Direct draw**, 0.05, **Draw**. Expect a transaction hash and Drawn about $0.05. The sheet says "Paid, on credit" even though nothing was bought.
+5. **Nanopayment:** **x402 Purchase**, **Alpha signal**, **Buy**. Expect "Paid by the agent", a settlement ID, and Drawn unchanged. Payments are batched, so there is no transaction per payment.
+6. **Buy on credit:** **Exposure curve**, **Buy**. Expect "Paid, on credit" and Drawn up about $0.20. **On chain** can lag, because small purchases reach the chain in batches.
+7. **Repay:** **Repay**, **Your wallet**, **Repay**, confirm in the wallet. Expect Drawn $0.00, and **On chain** now agrees.
 
-## Test 3: a loan
-Click **x402 Purchase**, choose **Direct draw**, enter 0.05, and click **Draw**.
-Expect a transaction hash, Drawn about $0.05, Headroom about $0.45, and "Agent holds $0.05" next time you open the sheet.
-The sheet says "Paid, on credit" even though nothing was bought. That wording is known.
+## Held payments and refusals
+8. **Held payment:** buy **Underwriting dossier** ($0.45). Expect "Held. Your call." Try **Decline**, then buy it again and **Approve and pay**. The first approval asks you to link World ID for Agents once, and needs an Orb-verified World ID. Repay afterwards.
+9. **Refusals:** each should fail or wait, with a reason:
+   - With $0.21 or more owed, the $0.45 dossier.
+   - **Unvetted feed** and **Discount feed**.
+   - A second agent with a cap of 0.10, buying Exposure curve.
+   - **Revoke** on an agent that owes money.
 
-## Test 4: Nanopayments, the agent paying for itself
-Click **x402 Purchase**, choose **Alpha signal** ($0.01), and click **Buy**.
-Expect "Paid by the agent", "Would borrow $0.000", a settlement ID, and Drawn unchanged.
-The Tape shows "paid for /premium-data". Each purchase is batched, so it has a settlement ID and no transaction of its own.
+## The new Arc features
+10. **Marketplace:** search "botpay", **Buy** the $0.01 one, **Buy for $0.01**. Expect a real receipt, `Receipt ID: pi_…`.
+11. **Deposit:** in **Deposit-backed credit**, connect, **Use this wallet**, sign, enter 1, **Deposit**, approve two transactions. Expect Line $1.30 at the top.
+12. **Withdraw:** enter 0.2, **Request withdrawal**. Expect 59 minutes left and Line $1.14. **Cancel** returns it to $1.30.
+13. **Lend:** in **Lending pool**, enter 0.5, **Deposit**, approve two transactions. Expect "Your deposit $0.50" and an unlock time a day later. The pool's totals include earlier tests.
+14. **Bridge Kit:** owe something first. Copy the agent's address from its lead and send it 1 USDC and 0.005 ETH on Base Sepolia, plus 0.1 USDC on Arc for gas. In **Repay from another chain**, choose Base Sepolia, enter 0.25, and submit. Expect it to finish in under a minute, with the debt down. Any excess stays in the agent's wallet.
 
-## Test 5: buying on credit
-Choose **Exposure curve** ($0.20) and click **Buy**.
-Expect "Paid, on credit", an artifact, and Drawn up by about $0.20. The payment also shows on the Tape.
-The **On chain** panel may still show the old debt. Small purchases reach the chain in batches, and repaying forces them through.
+## Whitechain
+**Needs test USDT in the operator wallet** `0x5233E4253bC38e8CF517c0768dbC8aCC886F32B3`. Until then, buying fails with `insufficient_funds`.
 
-## Test 6: repaying
-Click **Repay**, choose **Your wallet**, keep the amount, click **Repay**, and confirm in the wallet.
-Expect Drawn $0.00 and the full headroom back. **On chain** now agrees, and repayments in **Record** goes up by one.
+15. **Buy on credit:** at `/whitechain`, **Add an agent** if you have none, then **Buy for $0.20**. Expect "Paid on credit" and a receipt link. The agent holds no WBT at all.
+16. **Earn and repay:** **A customer pays it $0.50**, then **Repay**. Expect nothing owed.
+17. **Pay for itself:** **Buy for $0.01**. Expect "Paid by the agent".
+18. **Merchant:** at `/whitechain/merchant`, expect those payments with links, and what the gas cost.
 
-## Test 7: a payment held for approval
-Choose **Underwriting dossier** ($0.45) and click **Buy**. It is over the $0.40 limit.
-Expect "Held. Your call." with **Decline** and **Approve and pay**.
-- **Decline:** nothing is paid.
-- Buy it again, then **Approve and pay:** "Paid, on credit" and Drawn about $0.46.
-
-Repay it afterwards.
-
-## Test 8: being refused
-- **Over the line:** with $0.21 or more owed, try the $0.45 dossier. It should be refused.
-- **Risky seller:** **Unvetted feed** and **Discount feed** should be refused, with the reason shown.
-- **Agent cap:** authorize a second agent with a cap of 0.10 and buy Exposure curve with it. It should be held.
-- **Revoking:** click **Revoke** on an agent that owes money. It should be refused.
-
-## Test 9: the marketplace
-In **Marketplace**, search for "botpay". Expect two services.
-Click **Buy** on the $0.01 one, then **Buy for $0.01**.
-Expect a real receipt from BotPay, such as `{"message": "Receipt ID: pi_…"}`.
-This usually takes a few seconds. It took over a minute in earlier test runs, so give it time.
-
-## Test 10: deposit-backed credit
-In **Deposit-backed credit**:
-1. Connect your wallet, click **Use this wallet**, and sign the message. It costs nothing.
-2. Enter 1 and click **Deposit**. Approve two transactions.
-
-Expect Deposited $1.00, Credit it adds $0.80, and Line $1.30 at the top of the page.
-
-## Test 11: withdrawing
-1. Enter 0.2 under Withdraw and click **Request withdrawal**.
-   Expect "Withdrawal waiting $0.20 · 59m left", and the line drops to $1.14.
-2. Click **Cancel**. The line returns to $1.30.
-3. To finish a withdrawal, request again, wait an hour, and click **Withdraw**.
-
-## Test 12: lending
-In **Lending pool**, enter 0.5 and click **Deposit**. Approve two transactions.
-Expect "Your deposit $0.50" and a note saying when it can be withdrawn, one day later.
-The pool's totals include money from earlier test runs, so they will not start at zero.
-
-## Test 13: the rest of the page
-- **Lending limits:** new credit today should rise as you borrow.
-- **Repay in any token:** shows "Not live yet", which is correct until the jar is deployed.
-- **Sign out, then Continue:** the same browser returns to the same account.
+## Last checks
+19. **Lending limits:** new credit today rises as you borrow.
+20. **Repay in any token:** shows "Not live yet", which is correct.
+21. **Sui:** `/sui` opens with its own $0.50 line.
+22. **Mini app:** open in World App and sign in. Expect the same account.
 
 ## From a terminal
 ```bash
-npm run e2e:arc       # nanopayments, loans, repayment, on the live site
-npm run e2e:secured   # deposit, seizure on default, pool, real marketplace purchase
-npm run e2e:jar       # Token Jar on a local copy of Base, no real money
+npm run e2e:arc              # nanopayments, loans, repayment, on the live site
+npm run e2e:secured          # deposit, seizure on default, pool, real marketplace purchase
+npm run e2e:jar              # Token Jar on a local copy of Base, no real money
+npm run e2e:whitechain-fork  # Whitechain on a local copy, with the real USDT
+npm run e2e:standing         # late and defaulted loans
 ```
 
-## What cannot be tested today
+## What cannot be tested by hand today
 - **$1 and $2 tiers:** these need 7 and 14 days of history.
-- **Late and defaulted loans through the site:** loans last 7 days. `npm run e2e:standing` simulates this.
-- **Bridge Kit:** waiting on Base Sepolia gas.
-- **World ID and the mini app:** switched off and still pointing at Railway.
+- **Late loans and defaults:** loans last 7 days. Use `e2e:standing` and `e2e:secured`.
+- **Finishing a withdrawal:** the vault waits an hour and the pool a day.
+- **The Token Jar on a live network:** Uniswap's factory is not on any testnet we checked. Use `e2e:jar`.

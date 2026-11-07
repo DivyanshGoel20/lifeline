@@ -66,7 +66,7 @@ flowchart TB
 | Nanopayments (Circle Gateway, x402 batching) | Every agent purchase, from its own balance or on credit | Yes, settlement IDs returned |
 | Discovery API | The marketplace: 134 services that accept Arc testnet | Yes, including a purchase from a real seller |
 | USDC as gas | All contracts and wallets | Yes |
-| Bridge Kit (CCTP) | Repaying Arc debt from other chains | No: needs USDC on another testnet |
+| Bridge Kit (CCTP) | Repaying Arc debt from other chains | Yes: USDC from Base Sepolia repaid a debt on the live site |
 | Borrow Kit | Not used on purpose: it lends USDC against cirBTC, and Lifeline is the lender | n/a |
 | Earn (ERC-4626 "Morpho USDC Vault", `0x8f2d…d2dc`) | Deposits earn while they back credit | Yes, deposit and seizure through it. It is Arc testnet's vault, listed as a mock of Morpho |
 | Arc Studio | Contracts, tests, screens, deployment | Yes |
